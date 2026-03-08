@@ -11,38 +11,12 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0a0a0f;
-      color: #c4c8d4;
+      background: #f7f7f8;
+      color: #3c4257;
       min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
     }
 
-    /* Stripe-style gradient mesh background */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -40%;
-      left: -20%;
-      width: 80%;
-      height: 80%;
-      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    body::after {
-      content: '';
-      position: fixed;
-      bottom: -30%;
-      right: -20%;
-      width: 70%;
-      height: 70%;
-      background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; position: relative; z-index: 1; }
+    .container { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
 
     /* Header */
     .header { margin-bottom: 40px; }
@@ -51,24 +25,19 @@
       font-weight: 600;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: rgba(167, 139, 250, 0.9);
+      color: #635bff;
       margin-bottom: 16px;
     }
     h1 {
       font-size: 40px;
       font-weight: 700;
       line-height: 1.15;
-      color: #fff;
+      color: #0a2540;
       margin-bottom: 8px;
       letter-spacing: -0.5px;
     }
-    h1 span {
-      background: linear-gradient(135deg, #a78bfa, #818cf8, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .subtitle { color: #6b7084; font-size: 16px; line-height: 1.5; }
+    h1 span { color: #635bff; }
+    .subtitle { color: #596780; font-size: 16px; line-height: 1.5; }
 
     /* Steps */
     .steps { display: flex; gap: 4px; margin-bottom: 32px; }
@@ -76,35 +45,29 @@
       flex: 1;
       height: 3px;
       border-radius: 3px;
-      background: rgba(255,255,255,0.06);
+      background: #e3e8ee;
       transition: all 0.5s ease;
-      position: relative;
     }
-    .step.active {
-      background: linear-gradient(90deg, #818cf8, #a78bfa);
-      box-shadow: 0 0 12px rgba(129, 140, 248, 0.4);
-    }
-    .step.done { background: rgba(129, 140, 248, 0.3); }
+    .step.active { background: #635bff; }
+    .step.done { background: #a3acb9; }
     .step-labels { display: flex; gap: 4px; margin-bottom: 4px; }
-    .step-label { flex: 1; font-size: 11px; font-weight: 500; color: #454960; text-align: center; letter-spacing: 0.3px; }
-    .step-label.active { color: #a78bfa; }
-    .step-label.done { color: #6b7084; }
+    .step-label { flex: 1; font-size: 11px; font-weight: 500; color: #a3acb9; text-align: center; letter-spacing: 0.3px; }
+    .step-label.active { color: #635bff; }
+    .step-label.done { color: #596780; }
 
     /* Cards */
     .card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
+      background: #fff;
+      border: 1px solid #e3e8ee;
+      border-radius: 12px;
       padding: 24px;
       margin-bottom: 12px;
-      backdrop-filter: blur(20px);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    .card:hover { border-color: rgba(255, 255, 255, 0.1); }
     .card h2 {
       font-size: 11px;
       font-weight: 600;
-      color: #555a6e;
+      color: #8792a2;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-bottom: 16px;
@@ -113,25 +76,24 @@
     /* Fields */
     .field { margin-bottom: 14px; }
     .field:last-child { margin-bottom: 0; }
-    .field label { display: block; font-size: 13px; font-weight: 500; color: #7a7f96; margin-bottom: 6px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; color: #596780; margin-bottom: 6px; }
     .field input {
       width: 100%;
       padding: 11px 14px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      color: #e2e4ed;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+      color: #0a2540;
       font-family: inherit;
       font-size: 14px;
       outline: none;
       transition: all 0.2s ease;
     }
     .field input:focus {
-      border-color: rgba(129, 140, 248, 0.5);
-      background: rgba(129, 140, 248, 0.04);
-      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+      border-color: #635bff;
+      box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
     }
-    .field input::placeholder { color: #3d4155; }
+    .field input::placeholder { color: #a3acb9; }
     .row { display: flex; gap: 12px; }
     .row .field { flex: 1; }
 
@@ -139,52 +101,53 @@
     button {
       cursor: pointer;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       font-family: inherit;
       font-size: 14px;
       font-weight: 600;
       padding: 11px 24px;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
     }
     .btn-primary {
       width: 100%;
       padding: 13px;
       font-size: 14px;
-      background: linear-gradient(135deg, #6366f1, #818cf8);
+      background: #635bff;
       color: #fff;
-      box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+      box-shadow: 0 1px 3px rgba(99, 91, 255, 0.3);
     }
     .btn-primary:hover {
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.45);
+      background: #5851ea;
+      box-shadow: 0 2px 8px rgba(99, 91, 255, 0.35);
       transform: translateY(-1px);
     }
     .btn-primary:disabled {
-      background: rgba(255,255,255,0.06);
-      color: #454960;
+      background: #e3e8ee;
+      color: #a3acb9;
       cursor: not-allowed;
       box-shadow: none;
       transform: none;
     }
     .btn-sm {
-      background: rgba(255, 255, 255, 0.06);
-      color: #8b8fa8;
+      background: #f7f7f8;
+      color: #596780;
       padding: 7px 16px;
       font-size: 12px;
       font-weight: 500;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid #e3e8ee;
     }
-    .btn-sm:hover { background: rgba(255,255,255,0.1); color: #c4c8d4; }
+    .btn-sm:hover { background: #eef0f3; }
     .btn-copy {
-      background: rgba(129, 140, 248, 0.1);
-      color: #a78bfa;
-      border: 1px solid rgba(129, 140, 248, 0.2);
+      background: rgba(99, 91, 255, 0.06);
+      color: #635bff;
+      border: 1px solid rgba(99, 91, 255, 0.15);
     }
-    .btn-copy:hover { background: rgba(129, 140, 248, 0.2); color: #c4b5fd; }
+    .btn-copy:hover { background: rgba(99, 91, 255, 0.12); }
 
     /* Status */
     .status {
       padding: 12px 16px;
-      border-radius: 10px;
+      border-radius: 8px;
       margin-bottom: 12px;
       font-size: 13px;
       font-weight: 500;
@@ -193,37 +156,37 @@
     .status.loading {
       display: flex;
       align-items: center;
-      background: rgba(129, 140, 248, 0.06);
-      border: 1px solid rgba(129, 140, 248, 0.12);
-      color: #a5b4fc;
+      background: #f0f0ff;
+      border: 1px solid #ddd9ff;
+      color: #635bff;
     }
     .status.error {
       display: block;
-      background: rgba(239, 68, 68, 0.06);
-      border: 1px solid rgba(239, 68, 68, 0.12);
-      color: #fca5a5;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
     }
     .status.success {
       display: flex;
       align-items: center;
-      background: rgba(52, 211, 153, 0.06);
-      border: 1px solid rgba(52, 211, 153, 0.12);
-      color: #6ee7b7;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #16a34a;
     }
     .status.success::before { content: '\2713\00a0\00a0'; font-weight: 700; }
 
     /* Profile data */
-    .profile-data { font-size: 14px; color: #8b8fa8; line-height: 1.7; }
-    .profile-data strong { color: #e2e4ed; font-weight: 600; }
+    .profile-data { font-size: 14px; color: #596780; line-height: 1.7; }
+    .profile-data strong { color: #0a2540; font-weight: 600; }
     .tag {
       display: inline-block;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #f7f7f8;
+      border: 1px solid #e3e8ee;
       border-radius: 6px;
       padding: 3px 10px;
       margin: 3px 4px 3px 0;
       font-size: 12px;
-      color: #a5a8bd;
+      color: #3c4257;
       font-weight: 500;
     }
 
@@ -240,22 +203,21 @@
       align-items: center;
       justify-content: space-between;
       padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      transition: background 0.15s;
+      border-bottom: 1px solid #f0f2f5;
     }
     .person-row:last-child { border-bottom: none; }
     .person-info { flex: 1; min-width: 0; }
-    .person-name { font-size: 14px; font-weight: 600; color: #e2e4ed; }
+    .person-name { font-size: 14px; font-weight: 600; color: #0a2540; }
     .person-title {
       font-size: 12px;
-      color: #6b7084;
+      color: #8792a2;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       margin-top: 1px;
     }
     .person-link {
-      color: #818cf8;
+      color: #635bff;
       text-decoration: none;
       font-size: 12px;
       font-weight: 500;
@@ -265,7 +227,7 @@
       border-radius: 6px;
       transition: all 0.15s;
     }
-    .person-link:hover { background: rgba(129, 140, 248, 0.1); }
+    .person-link:hover { background: rgba(99, 91, 255, 0.06); }
 
     /* LinkedIn URLs */
     .linkedin-link {
@@ -273,19 +235,18 @@
       align-items: center;
       gap: 10px;
       padding: 12px 16px;
-      background: rgba(59, 130, 246, 0.05);
-      border: 1px solid rgba(59, 130, 246, 0.1);
-      border-radius: 10px;
-      color: #93c5fd;
+      background: #f0f7ff;
+      border: 1px solid #d4e4f7;
+      border-radius: 8px;
+      color: #1a6dcc;
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
       margin-bottom: 8px;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
     .linkedin-link:hover {
-      background: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.2);
+      background: #e4effc;
       transform: translateX(2px);
     }
     .linkedin-link::before {
@@ -301,8 +262,8 @@
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid rgba(129, 140, 248, 0.2);
-      border-top-color: #818cf8;
+      border: 2px solid #ddd9ff;
+      border-top-color: #635bff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       margin-right: 10px;
@@ -394,7 +355,7 @@
       <h2>People Found</h2>
       <div class="actions">
         <button class="btn-sm btn-copy" onclick="copyResults()">Copy All</button>
-        <span id="copyFeedback" style="font-size:12px; color:#6ee7b7; display:none;">Copied!</span>
+        <span id="copyFeedback" style="font-size:12px; color:#16a34a; display:none;">Copied!</span>
       </div>
       <div id="peopleList" style="margin-top: 8px;"></div>
     </div>
@@ -404,7 +365,7 @@
       <div id="linkedinUrls"></div>
       <div class="actions">
         <button class="btn-sm btn-copy" onclick="copyLinkedinUrls()">Copy URLs</button>
-        <span id="copyUrlFeedback" style="font-size:12px; color:#6ee7b7; display:none;">Copied!</span>
+        <span id="copyUrlFeedback" style="font-size:12px; color:#16a34a; display:none;">Copied!</span>
       </div>
     </div>
   </div>
@@ -489,9 +450,9 @@
 
       document.getElementById("profileData").innerHTML = `
         <div><strong>${escHtml(p.fullName)}</strong> ${p.headline ? " \u2014 " + escHtml(p.headline) : ""}</div>
-        <div style="margin-top:2px; font-size:13px; color:#6b7084;">${p.city ? escHtml(p.city) + ", " : ""}${escHtml(p.country || "")}</div>
-        <div style="margin-top:12px;"><strong>Experience</strong><br>${exp || '<span style="color:#555a6e;">None found</span>'}</div>
-        <div style="margin-top:12px;"><strong>Education</strong><br>${edu || '<span style="color:#555a6e;">None found</span>'}</div>
+        <div style="margin-top:2px; font-size:13px; color:#8792a2;">${p.city ? escHtml(p.city) + ", " : ""}${escHtml(p.country || "")}</div>
+        <div style="margin-top:12px;"><strong>Experience</strong><br>${exp || '<span style="color:#8792a2;">None found</span>'}</div>
+        <div style="margin-top:12px;"><strong>Education</strong><br>${edu || '<span style="color:#8792a2;">None found</span>'}</div>
       `;
     }
 
@@ -590,7 +551,7 @@
         }
       }
 
-      if (!html) html = '<div style="color:#555a6e; font-size:13px;">No past companies or schools found in profile</div>';
+      if (!html) html = '<div style="color:#8792a2; font-size:13px;">No past companies or schools found in profile</div>';
       container.innerHTML = html;
       document.getElementById("linkedinCard").classList.add("visible");
     }
