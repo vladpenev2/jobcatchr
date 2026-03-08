@@ -89,12 +89,14 @@
 
     <div id="searchStatus" class="status"></div>
     <div class="card results-section" id="resultsCard">
-      <h2>People Found</h2>
-      <div class="actions">
-        <button class="btn-sm btn-copy" onclick="copyResults()">Copy All</button>
-        <span id="copyFeedback" style="font-size:12px; color:#16a34a; display:none;">Copied!</span>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <h2 style="margin-bottom:0;">People Found <span id="peopleCount" style="font-weight:400; color:#8792a2;"></span></h2>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="copyFeedback" style="font-size:12px; color:#16a34a; display:none;">Copied!</span>
+          <button class="btn-sm btn-copy" onclick="copyResults()">Copy All</button>
+        </div>
       </div>
-      <div id="peopleList" style="margin-top: 8px;"></div>
+      <div id="peopleList"></div>
     </div>
 
     <div class="card results-section" id="linkedinCard">
@@ -111,7 +113,8 @@
     let extractedProfile = null;
     let searchResults = [];
     let linkedinUrlData = { pastCompanyUrl: null, schoolUrl: null };
-    let resolvedCompany = null; // { numericId, name, slug }
+    let resolvedCompany = null; // { numericId, name, slug, logoUrl }
+    let resolvedPastCompanies = []; // [{ name, numericId }]
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("company")) document.getElementById("company").value = params.get("company");
@@ -146,6 +149,10 @@
       document.getElementById(id).innerHTML = "";
     }
 
+    function scrollTo(id) {
+      document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
     async function extractProfile() {
       const url = document.getElementById("linkedinUrl").value.trim();
       if (!url) return alert("Paste a LinkedIn URL first");
@@ -154,6 +161,7 @@
       btn.disabled = true;
       btn.textContent = "Extracting...";
       setStatus("profileStatus", "loading", "Extracting LinkedIn profile... this takes 15-30s");
+      scrollTo("profileStatus");
       updateSteps(2);
 
       try {
@@ -204,12 +212,62 @@
         setStatus("profileStatus", "success", "Profile extracted" + cacheMsg + companyMsg);
         renderProfile(profileData);
         generateSearchQuery(profileData);
+        scrollTo("searchCard");
         updateSteps(3);
+
+        // Resolve past companies in background (don't block UI)
+        resolvePastCompanies(profileData);
       } catch (err) {
         setStatus("profileStatus", "error", "Error: " + err.message);
       } finally {
         btn.disabled = false;
         btn.textContent = "Extract Profile";
+      }
+    }
+
+    async function resolvePastCompanies(profile) {
+      const targetCompany = document.getElementById("company").value.trim().toLowerCase();
+      const seen = new Set();
+      const toResolve = profile.experiences
+        .filter(e => e.company)
+        .filter(e => {
+          const name = e.company.toLowerCase();
+          if (seen.has(name)) return false;
+          seen.add(name);
+          // Skip the target company
+          if (name === targetCompany) return false;
+          if (resolvedCompany && resolvedCompany.name && name === resolvedCompany.name.toLowerCase()) return false;
+          return true;
+        })
+        .slice(0, 5); // cap at 5 to limit scraper calls
+
+      if (!toResolve.length) return;
+
+      const results = await Promise.allSettled(
+        toResolve.map(e => {
+          const body = e.companyLinkedinUrl && e.companyLinkedinUrl.includes("linkedin.com")
+            ? { companyLinkedinUrl: e.companyLinkedinUrl }
+            : { companyName: e.company };
+          return fetch("/api/resolve-company", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }).then(r => r.ok ? r.json() : null);
+        })
+      );
+
+      resolvedPastCompanies = results
+        .map((r, i) => {
+          if (r.status === "fulfilled" && r.value && r.value.numericId) {
+            return { name: toResolve[i].company, numericId: r.value.numericId };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      // Re-render LinkedIn URLs now that we have numeric IDs
+      if (document.getElementById("linkedinCard").classList.contains("visible")) {
+        renderLinkedinUrls();
       }
     }
 
@@ -249,7 +307,7 @@
       const role = document.getElementById("role").value;
       const location = document.getElementById("location").value;
       document.getElementById("searchQuery").value =
-        `site:linkedin.com/in ${company} ${location} ${role} OR engineering manager OR hiring manager OR recruiter OR talent acquisition`;
+        `site:linkedin.com/in, ${company}, ${location}, ${role}, engineering manager, hiring manager, recruiter, talent acquisition`;
       document.getElementById("searchCard").classList.add("visible");
     }
 
@@ -261,6 +319,7 @@
       btn.disabled = true;
       btn.textContent = "Searching...";
       setStatus("searchStatus", "loading", "Searching Exa.ai for people... this takes 10-20s");
+      scrollTo("searchStatus");
 
       try {
         const location = document.getElementById("location").value || "US";
@@ -280,6 +339,7 @@
         setStatus("searchStatus", "success", `Found ${searchResults.length} people`);
         renderResults();
         renderLinkedinUrls();
+        scrollTo("resultsCard");
         updateSteps(4); // all done
       } catch (err) {
         setStatus("searchStatus", "error", "Error: " + err.message);
@@ -291,6 +351,7 @@
 
     function renderResults() {
       document.getElementById("resultsCard").classList.add("visible");
+      document.getElementById("peopleCount").textContent = `(${searchResults.length})`;
       const list = document.getElementById("peopleList");
       const badge = resolvedCompany && resolvedCompany.logoUrl
         ? `<img class="company-badge" src="${escHtml(resolvedCompany.logoUrl)}" alt="" onerror="this.style.display='none'">`
@@ -326,20 +387,34 @@
       if (!companyId) {
         html = '<div style="color:#8792a2; font-size:13px;">No company LinkedIn ID resolved. Provide a company LinkedIn URL to enable connection URLs.</div>';
       } else if (extractedProfile) {
-        const companyFilter = encodeURIComponent(JSON.stringify([companyId]));
-        const pastCompanies = extractedProfile.experiences.map(e => e.company).filter(Boolean);
-        if (pastCompanies.length) {
-          const keywords = pastCompanies.slice(0, 3).join(" OR ");
-          const url = `https://www.linkedin.com/search/results/people/?currentCompany=${companyFilter}&keywords=${encodeURIComponent(keywords)}`;
-          html += `<a class="linkedin-link" href="${url}" target="_blank">From Previous Companies: ${pastCompanies.slice(0, 3).join(", ")}</a>`;
+        const baseUrl = "https://www.linkedin.com/search/results/people/";
+        const currentFilter = encodeURIComponent(JSON.stringify([companyId]));
+
+        // Past companies: use numeric IDs if resolved, otherwise fall back to keywords
+        if (resolvedPastCompanies.length) {
+          const pastIds = resolvedPastCompanies.map(c => c.numericId);
+          const pastFilter = encodeURIComponent(JSON.stringify(pastIds));
+          const names = resolvedPastCompanies.map(c => c.name).join(", ");
+          const url = `${baseUrl}?currentCompany=${currentFilter}&pastCompany=${pastFilter}`;
+          html += `<a class="linkedin-link" href="${url}" target="_blank">Worked at: ${names}</a>`;
+        } else {
+          const pastCompanies = extractedProfile.experiences.map(e => e.company).filter(Boolean);
+          if (pastCompanies.length) {
+            const keywords = pastCompanies.slice(0, 3).join(" OR ");
+            const url = `${baseUrl}?currentCompany=${currentFilter}&keywords=${encodeURIComponent(keywords)}`;
+            html += `<a class="linkedin-link" href="${url}" target="_blank">Worked at: ${pastCompanies.slice(0, 3).join(", ")}</a>`;
+          }
         }
+
+        // Schools: keyword fallback (no numeric IDs available)
         const schools = extractedProfile.education.map(e => e.school).filter(Boolean);
         if (schools.length) {
           const keywords = schools.join(" OR ");
-          const url = `https://www.linkedin.com/search/results/people/?currentCompany=${companyFilter}&keywords=${encodeURIComponent(keywords)}`;
-          html += `<a class="linkedin-link" href="${url}" target="_blank">From Schools: ${schools.join(", ")}</a>`;
+          const url = `${baseUrl}?currentCompany=${currentFilter}&keywords=${encodeURIComponent(keywords)}`;
+          html += `<a class="linkedin-link" href="${url}" target="_blank">Studied at: ${schools.join(", ")}</a>`;
         }
-        if (!pastCompanies.length && !schools.length) {
+
+        if (!resolvedPastCompanies.length && !extractedProfile.experiences.length && !schools.length) {
           html = '<div style="color:#8792a2; font-size:13px;">No past companies or schools found in profile</div>';
         }
       }
@@ -352,7 +427,9 @@
       const text = searchResults.map(p => {
         let title = p.title || "";
         if (title.includes("|")) title = title.split("|").slice(1).join("|").trim();
-        return `${p.name}\t${title}\t${p.url}`;
+        if (title.includes(" - ")) title = title.split(" - ").slice(1).join(" - ").trim();
+        const loc = p.location || "";
+        return `${p.name}, ${title}${loc ? ", " + loc : ""}, ${p.url}`;
       }).join("\n");
       navigator.clipboard.writeText(text).then(() => {
         const fb = document.getElementById("copyFeedback");
