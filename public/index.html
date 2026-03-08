@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobCatchr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a0f;
+      color: #c4c8d4;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Stripe-style gradient mesh background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -40%;
+      left: -20%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      right: -20%;
+      width: 70%;
+      height: 70%;
+      background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; position: relative; z-index: 1; }
+
+    /* Header */
+    .header { margin-bottom: 40px; }
+    .logo {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(167, 139, 250, 0.9);
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    h1 span {
+      background: linear-gradient(135deg, #a78bfa, #818cf8, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { color: #6b7084; font-size: 16px; line-height: 1.5; }
+
+    /* Steps */
+    .steps { display: flex; gap: 4px; margin-bottom: 32px; }
+    .step {
+      flex: 1;
+      height: 3px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.06);
+      transition: all 0.5s ease;
+      position: relative;
+    }
+    .step.active {
+      background: linear-gradient(90deg, #818cf8, #a78bfa);
+      box-shadow: 0 0 12px rgba(129, 140, 248, 0.4);
+    }
+    .step.done { background: rgba(129, 140, 248, 0.3); }
+    .step-labels { display: flex; gap: 4px; margin-bottom: 4px; }
+    .step-label { flex: 1; font-size: 11px; font-weight: 500; color: #454960; text-align: center; letter-spacing: 0.3px; }
+    .step-label.active { color: #a78bfa; }
+    .step-label.done { color: #6b7084; }
+
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(20px);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover { border-color: rgba(255, 255, 255, 0.1); }
+    .card h2 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #555a6e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    /* Fields */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 13px; font-weight: 500; color: #7a7f96; margin-bottom: 6px; }
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      color: #e2e4ed;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .field input:focus {
+      border-color: rgba(129, 140, 248, 0.5);
+      background: rgba(129, 140, 248, 0.04);
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+    }
+    .field input::placeholder { color: #3d4155; }
+    .row { display: flex; gap: 12px; }
+    .row .field { flex: 1; }
+
+    /* Buttons */
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 11px 24px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      font-size: 14px;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled {
+      background: rgba(255,255,255,0.06);
+      color: #454960;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn-sm {
+      background: rgba(255, 255, 255, 0.06);
+      color: #8b8fa8;
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .btn-sm:hover { background: rgba(255,255,255,0.1); color: #c4c8d4; }
+    .btn-copy {
+      background: rgba(129, 140, 248, 0.1);
+      color: #a78bfa;
+      border: 1px solid rgba(129, 140, 248, 0.2);
+    }
+    .btn-copy:hover { background: rgba(129, 140, 248, 0.2); color: #c4b5fd; }
+
+    /* Status */
+    .status {
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+    }
+    .status.loading {
+      display: flex;
+      align-items: center;
+      background: rgba(129, 140, 248, 0.06);
+      border: 1px solid rgba(129, 140, 248, 0.12);
+      color: #a5b4fc;
+    }
+    .status.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+    }
+    .status.success {
+      display: flex;
+      align-items: center;
+      background: rgba(52, 211, 153, 0.06);
+      border: 1px solid rgba(52, 211, 153, 0.12);
+      color: #6ee7b7;
+    }
+    .status.success::before { content: '\2713\00a0\00a0'; font-weight: 700; }
+
+    /* Profile data */
+    .profile-data { font-size: 14px; color: #8b8fa8; line-height: 1.7; }
+    .profile-data strong { color: #e2e4ed; font-weight: 600; }
+    .tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin: 3px 4px 3px 0;
+      font-size: 12px;
+      color: #a5a8bd;
+      font-weight: 500;
+    }
+
+    /* Results */
+    .results-section { display: none; }
+    .results-section.visible { display: block; animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .person-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    .person-row:last-child { border-bottom: none; }
+    .person-info { flex: 1; min-width: 0; }
+    .person-name { font-size: 14px; font-weight: 600; color: #e2e4ed; }
+    .person-title {
+      font-size: 12px;
+      color: #6b7084;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+    .person-link {
+      color: #818cf8;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-left: 16px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .person-link:hover { background: rgba(129, 140, 248, 0.1); }
+
+    /* LinkedIn URLs */
+    .linkedin-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.1);
+      border-radius: 10px;
+      color: #93c5fd;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .linkedin-link:hover {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.2);
+      transform: translateX(2px);
+    }
+    .linkedin-link::before {
+      content: '\2192';
+      font-size: 16px;
+      opacity: 0.5;
+    }
+
+    .actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(129, 140, 248, 0.2);
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container { padding: 32px 16px 60px; }
+      h1 { font-size: 28px; }
+      .row { flex-direction: column; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">JobCatchr</div>
+      <h1>Find <span>insider connections</span> for any job</h1>
+      <p class="subtitle">Extract candidate profiles, discover relevant people at target companies, and generate connection URLs.</p>
+    </div>
+
+    <div class="step-labels">
+      <div class="step-label" id="stepLabel1">Job Info</div>
+      <div class="step-label" id="stepLabel2">Extract</div>
+      <div class="step-label" id="stepLabel3">Search</div>
+    </div>
+    <div class="steps">
+      <div class="step" id="step1"></div>
+      <div class="step" id="step2"></div>
+      <div class="step" id="step3"></div>
+    </div>
+
+    <div class="card">
+      <h2>Job Details</h2>
+      <div class="row">
+        <div class="field">
+          <label>Company</label>
+          <input type="text" id="company" placeholder="e.g. Slalom">
+        </div>
+        <div class="field">
+          <label>Company LinkedIn ID</label>
+          <input type="text" id="companyLinkedinId" placeholder="e.g. 166000">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Role</label>
+          <input type="text" id="role" placeholder="e.g. Experience Design Director">
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input type="text" id="location" placeholder="e.g. Georgia">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Candidate Profile</h2>
+      <div class="field">
+        <label>LinkedIn Profile URL</label>
+        <input type="text" id="linkedinUrl" placeholder="https://www.linkedin.com/in/someone">
+      </div>
+      <div style="margin-top: 16px;">
+        <button class="btn-primary" id="extractBtn" onclick="extractProfile()">Extract Profile</button>
+      </div>
+    </div>
+
+    <div id="profileStatus" class="status"></div>
+    <div class="card results-section" id="profileCard">
+      <h2>Extracted Profile</h2>
+      <div id="profileData" class="profile-data"></div>
+    </div>
+
+    <div class="card results-section" id="searchCard">
+      <h2>Search Query</h2>
+      <div class="field">
+        <label>Natural language search (editable before running)</label>
+        <input type="text" id="searchQuery" placeholder="Auto-generated from job + profile data...">
+      </div>
+      <div style="margin-top: 16px;">
+        <button class="btn-primary" id="searchBtn" onclick="runSearch()">Find People</button>
+      </div>
+    </div>
+
+    <div id="searchStatus" class="status"></div>
+    <div class="card results-section" id="resultsCard">
+      <h2>People Found</h2>
+      <div class="actions">
+        <button class="btn-sm btn-copy" onclick="copyResults()">Copy All</button>
+        <span id="copyFeedback" style="font-size:12px; color:#6ee7b7; display:none;">Copied!</span>
+      </div>
+      <div id="peopleList" style="margin-top: 8px;"></div>
+    </div>
+
+    <div class="card results-section" id="linkedinCard">
+      <h2>LinkedIn Connection URLs</h2>
+      <div id="linkedinUrls"></div>
+      <div class="actions">
+        <button class="btn-sm btn-copy" onclick="copyLinkedinUrls()">Copy URLs</button>
+        <span id="copyUrlFeedback" style="font-size:12px; color:#6ee7b7; display:none;">Copied!</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let extractedProfile = null;
+    let searchResults = [];
+    let linkedinUrlData = { pastCompanyUrl: null, schoolUrl: null };
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("company")) document.getElementById("company").value = params.get("company");
+    if (params.get("companyLinkedinId")) document.getElementById("companyLinkedinId").value = params.get("companyLinkedinId");
+    if (params.get("role")) document.getElementById("role").value = params.get("role");
+    if (params.get("location")) document.getElementById("location").value = params.get("location");
+    if (params.get("linkedin")) document.getElementById("linkedinUrl").value = params.get("linkedin");
+
+    updateSteps(1);
+
+    function updateSteps(current) {
+      for (let i = 1; i <= 3; i++) {
+        const step = document.getElementById("step" + i);
+        const label = document.getElementById("stepLabel" + i);
+        step.className = "step";
+        label.className = "step-label";
+        if (i < current) { step.classList.add("done"); label.classList.add("done"); }
+        if (i === current) { step.classList.add("active"); label.classList.add("active"); }
+      }
+    }
+
+    function setStatus(id, type, msg) {
+      const el = document.getElementById(id);
+      el.className = "status " + type;
+      el.innerHTML = (type === "loading" ? '<span class="spinner"></span>' : "") + msg;
+    }
+
+    function clearStatus(id) {
+      document.getElementById(id).className = "status";
+      document.getElementById(id).innerHTML = "";
+    }
+
+    async function extractProfile() {
+      const url = document.getElementById("linkedinUrl").value.trim();
+      if (!url) return alert("Paste a LinkedIn URL first");
+
+      const btn = document.getElementById("extractBtn");
+      btn.disabled = true;
+      btn.textContent = "Extracting...";
+      setStatus("profileStatus", "loading", "Extracting LinkedIn profile... this takes 15-30s");
+      updateSteps(2);
+
+      try {
+        const res = await fetch("/api/extract-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ linkedinUrl: url }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        extractedProfile = data;
+        setStatus("profileStatus", "success", "Profile extracted successfully");
+        renderProfile(data);
+        generateSearchQuery(data);
+        updateSteps(3);
+      } catch (err) {
+        setStatus("profileStatus", "error", "Error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Extract Profile";
+      }
+    }
+
+    function renderProfile(p) {
+      document.getElementById("profileCard").classList.add("visible");
+
+      const exp = p.experiences.slice(0, 5).map(e =>
+        `<span class="tag">${escHtml(e.company)}${e.title ? " \u00b7 " + escHtml(e.title) : ""}</span>`
+      ).join("");
+      const edu = p.education.map(e =>
+        `<span class="tag">${escHtml(e.school)}${e.degree ? " \u00b7 " + escHtml(e.degree) : ""}</span>`
+      ).join("");
+
+      document.getElementById("profileData").innerHTML = `
+        <div><strong>${escHtml(p.fullName)}</strong> ${p.headline ? " \u2014 " + escHtml(p.headline) : ""}</div>
+        <div style="margin-top:2px; font-size:13px; color:#6b7084;">${p.city ? escHtml(p.city) + ", " : ""}${escHtml(p.country || "")}</div>
+        <div style="margin-top:12px;"><strong>Experience</strong><br>${exp || '<span style="color:#555a6e;">None found</span>'}</div>
+        <div style="margin-top:12px;"><strong>Education</strong><br>${edu || '<span style="color:#555a6e;">None found</span>'}</div>
+      `;
+    }
+
+    function generateSearchQuery(profile) {
+      const company = document.getElementById("company").value;
+      const role = document.getElementById("role").value;
+      const location = document.getElementById("location").value;
+      document.getElementById("searchQuery").value = `${role} or hiring manager at ${company} in ${location}`;
+      document.getElementById("searchCard").classList.add("visible");
+    }
+
+    async function runSearch() {
+      const query = document.getElementById("searchQuery").value.trim();
+      if (!query) return alert("Search query is empty");
+
+      const btn = document.getElementById("searchBtn");
+      btn.disabled = true;
+      btn.textContent = "Searching...";
+      setStatus("searchStatus", "loading", "Searching Exa.ai for people... this takes 10-20s");
+
+      try {
+        const location = document.getElementById("location").value || "US";
+        const companyLinkedinId = document.getElementById("companyLinkedinId").value;
+        const countryCode = getCountryCode(location);
+        const pastCompanyIds = [];
+        const schoolIds = [];
+
+        const [peopleRes, urlsRes] = await Promise.all([
+          fetch("/api/search-people", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query, location: countryCode, numResults: 15 }),
+          }),
+          fetch("/api/build-linkedin-urls", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ companyLinkedinId, pastCompanyIds, schoolIds }),
+          }),
+        ]);
+
+        const peopleData = await peopleRes.json();
+        const urlsData = await urlsRes.json();
+        if (!peopleRes.ok) throw new Error(peopleData.error);
+
+        searchResults = peopleData.people;
+        linkedinUrlData = urlsData;
+
+        setStatus("searchStatus", "success", `Found ${searchResults.length} people`);
+        renderResults();
+        renderLinkedinUrls();
+        updateSteps(4); // all done
+      } catch (err) {
+        setStatus("searchStatus", "error", "Error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Find People";
+      }
+    }
+
+    function renderResults() {
+      document.getElementById("resultsCard").classList.add("visible");
+      const list = document.getElementById("peopleList");
+      list.innerHTML = searchResults.map((p) => {
+        const name = p.name || "Unknown";
+        let title = p.title || "";
+        if (title.includes("|")) title = title.split("|").slice(1).join("|").trim();
+        if (title.includes(" - ")) title = title.split(" - ").slice(1).join(" - ").trim();
+        return `
+          <div class="person-row">
+            <div class="person-info">
+              <div class="person-name">${escHtml(name)}</div>
+              <div class="person-title">${escHtml(title)}</div>
+            </div>
+            <a class="person-link" href="${escHtml(p.url)}" target="_blank">LinkedIn</a>
+          </div>`;
+      }).join("");
+    }
+
+    function renderLinkedinUrls() {
+      const container = document.getElementById("linkedinUrls");
+      const companyId = document.getElementById("companyLinkedinId").value;
+      let html = "";
+
+      if (extractedProfile) {
+        const pastCompanies = extractedProfile.experiences.map(e => e.company).filter(Boolean);
+        if (pastCompanies.length && companyId) {
+          const keywords = pastCompanies.slice(0, 3).join(" OR ");
+          const url = `https://www.linkedin.com/search/results/people/?currentCompany=["${companyId}"]&keywords=${encodeURIComponent(keywords)}`;
+          html += `<a class="linkedin-link" href="${url}" target="_blank">From Previous Companies: ${pastCompanies.slice(0, 3).join(", ")}</a>`;
+        }
+        const schools = extractedProfile.education.map(e => e.school).filter(Boolean);
+        if (schools.length && companyId) {
+          const keywords = schools.join(" OR ");
+          const url = `https://www.linkedin.com/search/results/people/?currentCompany=["${companyId}"]&keywords=${encodeURIComponent(keywords)}`;
+          html += `<a class="linkedin-link" href="${url}" target="_blank">From Schools: ${schools.join(", ")}</a>`;
+        }
+      }
+
+      if (!html) html = '<div style="color:#555a6e; font-size:13px;">No past companies or schools found in profile</div>';
+      container.innerHTML = html;
+      document.getElementById("linkedinCard").classList.add("visible");
+    }
+
+    function copyResults() {
+      const text = searchResults.map(p => {
+        let title = p.title || "";
+        if (title.includes("|")) title = title.split("|").slice(1).join("|").trim();
+        return `${p.name}\t${title}\t${p.url}`;
+      }).join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        const fb = document.getElementById("copyFeedback");
+        fb.style.display = "inline";
+        setTimeout(() => fb.style.display = "none", 2000);
+      });
+    }
+
+    function copyLinkedinUrls() {
+      const links = document.querySelectorAll("#linkedinUrls .linkedin-link");
+      const text = Array.from(links).map(a => a.href).join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        const fb = document.getElementById("copyUrlFeedback");
+        fb.style.display = "inline";
+        setTimeout(() => fb.style.display = "none", 2000);
+      });
+    }
+
+    function getCountryCode(location) {
+      const map = {
+        "united states": "US", "usa": "US", "us": "US",
+        "united kingdom": "GB", "uk": "GB", "england": "GB",
+        "canada": "CA", "germany": "DE", "france": "FR",
+        "australia": "AU", "india": "IN", "spain": "ES",
+        "netherlands": "NL", "italy": "IT", "brazil": "BR",
+        "japan": "JP", "singapore": "SG", "ireland": "IE",
+        "sweden": "SE", "switzerland": "CH", "israel": "IL",
+        "georgia": "US", "california": "US", "new york": "US",
+        "texas": "US", "florida": "US", "washington": "US",
+        "massachusetts": "US", "illinois": "US", "colorado": "US",
+        "oregon": "US", "virginia": "US", "north carolina": "US",
+        "pennsylvania": "US", "ohio": "US", "arizona": "US",
+        "michigan": "US", "minnesota": "US", "maryland": "US",
+        "connecticut": "US", "new jersey": "US", "utah": "US",
+        "tennessee": "US", "missouri": "US", "wisconsin": "US",
+      };
+      const lower = (location || "").toLowerCase().trim();
+      for (const [key, code] of Object.entries(map)) {
+        if (lower.includes(key)) return code;
+      }
+      return "US";
+    }
+
+    function escHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
