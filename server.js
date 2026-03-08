@@ -91,6 +91,7 @@ app.post("/api/resolve-company", async (req, res) => {
       numericId: String(company.companyId || ""),
       name: company.companyName || "",
       slug: company.universalName || "",
+      logoUrl: company.logoResolutionResult || "",
     };
 
     if (result.numericId) {
@@ -118,12 +119,16 @@ app.post("/api/search-people", async (req, res) => {
     });
 
     const { items } = await apify.dataset(run.defaultDatasetId).listItems();
-    const people = items.map((item) => ({
-      name: item.author || item.title || "",
-      title: item.title || "",
-      url: item.url || "",
-      image: item.image || "",
-    }));
+    const people = items.map((item) => {
+      const entity = item.entities && item.entities[0] && item.entities[0].properties;
+      return {
+        name: item.author || (entity && entity.name) || item.title || "",
+        title: item.title || "",
+        url: item.url || "",
+        image: item.image || "",
+        location: (entity && entity.location) || "",
+      };
+    });
 
     res.json({ people });
   } catch (err) {

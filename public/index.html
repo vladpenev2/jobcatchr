@@ -6,278 +6,7 @@
   <title>JobCatchr</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f7f7f8;
-      color: #3c4257;
-      min-height: 100vh;
-    }
-
-    .container { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
-
-    /* Header */
-    .header { margin-bottom: 40px; }
-    .logo {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: #635bff;
-      margin-bottom: 16px;
-    }
-    h1 {
-      font-size: 40px;
-      font-weight: 700;
-      line-height: 1.15;
-      color: #0a2540;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
-    }
-    h1 span { color: #635bff; }
-    .subtitle { color: #596780; font-size: 16px; line-height: 1.5; }
-
-    /* Steps */
-    .steps { display: flex; gap: 4px; margin-bottom: 32px; }
-    .step {
-      flex: 1;
-      height: 3px;
-      border-radius: 3px;
-      background: #e3e8ee;
-      transition: all 0.5s ease;
-    }
-    .step.active { background: #635bff; }
-    .step.done { background: #a3acb9; }
-    .step-labels { display: flex; gap: 4px; margin-bottom: 4px; }
-    .step-label { flex: 1; font-size: 11px; font-weight: 500; color: #a3acb9; text-align: center; letter-spacing: 0.3px; }
-    .step-label.active { color: #635bff; }
-    .step-label.done { color: #596780; }
-
-    /* Cards */
-    .card {
-      background: #fff;
-      border: 1px solid #e3e8ee;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    .card h2 {
-      font-size: 11px;
-      font-weight: 600;
-      color: #8792a2;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 16px;
-    }
-
-    /* Fields */
-    .field { margin-bottom: 14px; }
-    .field:last-child { margin-bottom: 0; }
-    .field label { display: block; font-size: 13px; font-weight: 500; color: #596780; margin-bottom: 6px; }
-    .field input {
-      width: 100%;
-      padding: 11px 14px;
-      background: #fff;
-      border: 1px solid #d8dee4;
-      border-radius: 8px;
-      color: #0a2540;
-      font-family: inherit;
-      font-size: 14px;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-    .field input:focus {
-      border-color: #635bff;
-      box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
-    }
-    .field input::placeholder { color: #a3acb9; }
-    .row { display: flex; gap: 12px; }
-    .row .field { flex: 1; }
-
-    /* Buttons */
-    button {
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 11px 24px;
-      transition: all 0.15s ease;
-    }
-    .btn-primary {
-      width: 100%;
-      padding: 13px;
-      font-size: 14px;
-      background: #635bff;
-      color: #fff;
-      box-shadow: 0 1px 3px rgba(99, 91, 255, 0.3);
-    }
-    .btn-primary:hover {
-      background: #5851ea;
-      box-shadow: 0 2px 8px rgba(99, 91, 255, 0.35);
-      transform: translateY(-1px);
-    }
-    .btn-primary:disabled {
-      background: #e3e8ee;
-      color: #a3acb9;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
-    .btn-sm {
-      background: #f7f7f8;
-      color: #596780;
-      padding: 7px 16px;
-      font-size: 12px;
-      font-weight: 500;
-      border: 1px solid #e3e8ee;
-    }
-    .btn-sm:hover { background: #eef0f3; }
-    .btn-copy {
-      background: rgba(99, 91, 255, 0.06);
-      color: #635bff;
-      border: 1px solid rgba(99, 91, 255, 0.15);
-    }
-    .btn-copy:hover { background: rgba(99, 91, 255, 0.12); }
-
-    /* Status */
-    .status {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      font-size: 13px;
-      font-weight: 500;
-      display: none;
-    }
-    .status.loading {
-      display: flex;
-      align-items: center;
-      background: #f0f0ff;
-      border: 1px solid #ddd9ff;
-      color: #635bff;
-    }
-    .status.error {
-      display: block;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #dc2626;
-    }
-    .status.success {
-      display: flex;
-      align-items: center;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      color: #16a34a;
-    }
-    .status.success::before { content: '\2713\00a0\00a0'; font-weight: 700; }
-
-    /* Profile data */
-    .profile-data { font-size: 14px; color: #596780; line-height: 1.7; }
-    .profile-data strong { color: #0a2540; font-weight: 600; }
-    .tag {
-      display: inline-block;
-      background: #f7f7f8;
-      border: 1px solid #e3e8ee;
-      border-radius: 6px;
-      padding: 3px 10px;
-      margin: 3px 4px 3px 0;
-      font-size: 12px;
-      color: #3c4257;
-      font-weight: 500;
-    }
-
-    /* Results */
-    .results-section { display: none; }
-    .results-section.visible { display: block; animation: fadeUp 0.4s ease; }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .person-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #f0f2f5;
-    }
-    .person-row:last-child { border-bottom: none; }
-    .person-info { flex: 1; min-width: 0; }
-    .person-name { font-size: 14px; font-weight: 600; color: #0a2540; }
-    .person-title {
-      font-size: 12px;
-      color: #8792a2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 1px;
-    }
-    .person-link {
-      color: #635bff;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 500;
-      flex-shrink: 0;
-      margin-left: 16px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      transition: all 0.15s;
-    }
-    .person-link:hover { background: rgba(99, 91, 255, 0.06); }
-
-    /* LinkedIn URLs */
-    .linkedin-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #f0f7ff;
-      border: 1px solid #d4e4f7;
-      border-radius: 8px;
-      color: #1a6dcc;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 8px;
-      transition: all 0.15s;
-    }
-    .linkedin-link:hover {
-      background: #e4effc;
-      transform: translateX(2px);
-    }
-    .linkedin-link::before {
-      content: '\2192';
-      font-size: 16px;
-      opacity: 0.5;
-    }
-
-    .actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
-
-    /* Spinner */
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid #ddd9ff;
-      border-top-color: #635bff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      margin-right: 10px;
-      flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-      .container { padding: 32px 16px 60px; }
-      h1 { font-size: 28px; }
-      .row { flex-direction: column; gap: 0; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
@@ -287,19 +16,15 @@
       <p class="subtitle">Extract candidate profiles, discover relevant people at target companies, and generate connection URLs.</p>
     </div>
 
-    <div class="step-labels">
-      <div class="step-label" id="stepLabel1">Job Info</div>
-      <div class="step-label" id="stepLabel2">Extract</div>
-      <div class="step-label" id="stepLabel3">Search</div>
-    </div>
-    <div class="steps">
-      <div class="step" id="step1"></div>
-      <div class="step" id="step2"></div>
-      <div class="step" id="step3"></div>
+    <!-- Step 1: Job Info -->
+    <div class="step-divider" id="stepDiv1">
+      <span class="step-divider-label" id="stepLabel1">Step 1 &middot; Job Info</span>
+      <div class="step-divider-line" id="stepLine1"></div>
     </div>
 
     <div class="card">
       <h2>Job Details</h2>
+      <div id="companyLogoRow" class="company-logo-row" style="display:none;"></div>
       <div class="row">
         <div class="field">
           <label>Company</label>
@@ -333,10 +58,22 @@
       </div>
     </div>
 
+    <!-- Step 2: Extract -->
+    <div class="step-divider" id="stepDiv2">
+      <span class="step-divider-label" id="stepLabel2">Step 2 &middot; Extract</span>
+      <div class="step-divider-line" id="stepLine2"></div>
+    </div>
+
     <div id="profileStatus" class="status"></div>
     <div class="card results-section" id="profileCard">
       <h2>Extracted Profile</h2>
       <div id="profileData" class="profile-data"></div>
+    </div>
+
+    <!-- Step 3: Search -->
+    <div class="step-divider" id="stepDiv3">
+      <span class="step-divider-label" id="stepLabel3">Step 3 &middot; Search</span>
+      <div class="step-divider-line" id="stepLine3"></div>
     </div>
 
     <div class="card results-section" id="searchCard">
@@ -389,12 +126,12 @@
 
     function updateSteps(current) {
       for (let i = 1; i <= 3; i++) {
-        const step = document.getElementById("step" + i);
         const label = document.getElementById("stepLabel" + i);
-        step.className = "step";
-        label.className = "step-label";
-        if (i < current) { step.classList.add("done"); label.classList.add("done"); }
-        if (i === current) { step.classList.add("active"); label.classList.add("active"); }
+        const line = document.getElementById("stepLine" + i);
+        label.className = "step-divider-label";
+        line.className = "step-divider-line";
+        if (i < current) { label.classList.add("done"); line.classList.add("done"); }
+        if (i === current) { label.classList.add("active"); line.classList.add("active"); }
       }
     }
 
@@ -457,6 +194,7 @@
           const companyData = await responses[1].json();
           if (responses[1].ok && companyData.numericId) {
             resolvedCompany = companyData;
+            showCompanyLogo(companyData);
           }
         }
 
@@ -472,6 +210,19 @@
       } finally {
         btn.disabled = false;
         btn.textContent = "Extract Profile";
+      }
+    }
+
+    function showCompanyLogo(company) {
+      const row = document.getElementById("companyLogoRow");
+      if (company.logoUrl) {
+        row.innerHTML = `
+          <img class="company-logo" src="${escHtml(company.logoUrl)}" alt="" onerror="this.style.display='none'">
+          <div>
+            <div class="company-logo-name">${escHtml(company.name || "")}</div>
+            ${company.slug ? '<div class="company-logo-industry">linkedin.com/company/' + escHtml(company.slug) + '</div>' : ""}
+          </div>`;
+        row.style.display = "flex";
       }
     }
 
@@ -497,7 +248,8 @@
       const company = document.getElementById("company").value;
       const role = document.getElementById("role").value;
       const location = document.getElementById("location").value;
-      document.getElementById("searchQuery").value = `${role} or hiring manager at ${company} in ${location}`;
+      document.getElementById("searchQuery").value =
+        `site:linkedin.com/in ${company} ${location} ${role} OR engineering manager OR hiring manager OR recruiter OR talent acquisition`;
       document.getElementById("searchCard").classList.add("visible");
     }
 
@@ -540,16 +292,26 @@
     function renderResults() {
       document.getElementById("resultsCard").classList.add("visible");
       const list = document.getElementById("peopleList");
+      const badge = resolvedCompany && resolvedCompany.logoUrl
+        ? `<img class="company-badge" src="${escHtml(resolvedCompany.logoUrl)}" alt="" onerror="this.style.display='none'">`
+        : "";
       list.innerHTML = searchResults.map((p) => {
         const name = p.name || "Unknown";
         let title = p.title || "";
         if (title.includes("|")) title = title.split("|").slice(1).join("|").trim();
         if (title.includes(" - ")) title = title.split(" - ").slice(1).join(" - ").trim();
+        const initials = name.split(" ").map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
+        const avatarImg = p.image
+          ? `<img class="person-avatar" src="${escHtml(p.image)}" alt="" onerror="this.outerHTML='<div class=\\'person-avatar-placeholder\\'>${initials}</div>'">`
+          : `<div class="person-avatar-placeholder">${initials}</div>`;
+        const location = p.location ? `<div class="person-location">${escHtml(p.location)}</div>` : "";
         return `
           <div class="person-row">
+            <div class="avatar-wrap">${avatarImg}${badge}</div>
             <div class="person-info">
               <div class="person-name">${escHtml(name)}</div>
               <div class="person-title">${escHtml(title)}</div>
+              ${location}
             </div>
             <a class="person-link" href="${escHtml(p.url)}" target="_blank">LinkedIn</a>
           </div>`;
