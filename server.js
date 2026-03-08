@@ -106,17 +106,24 @@ app.post("/api/resolve-company", async (req, res) => {
 
 // Search for people via Exa.ai
 app.post("/api/search-people", async (req, res) => {
-  const { query, location, numResults } = req.body;
+  const { query, location, numResults, highlightsQuery } = req.body;
   if (!query) return res.status(400).json({ error: "query required" });
 
   try {
-    const run = await apify.actor("fantastic-jobs/exa-ai-people-search").call({
+    const actorInput = {
       exaApiKey: process.env.EXA_API_KEY,
       query,
       userLocation: location || "US",
       numResults: numResults || 10,
       includeText: false,
-    });
+    };
+    if (highlightsQuery) {
+      actorInput.highlightsQuery = highlightsQuery;
+      actorInput.numSentences = 2;
+      actorInput.highlightsPerUrl = 1;
+    }
+
+    const run = await apify.actor("fantastic-jobs/exa-ai-people-search").call(actorInput);
 
     const { items } = await apify.dataset(run.defaultDatasetId).listItems();
     const people = items.map((item) => {
@@ -127,6 +134,7 @@ app.post("/api/search-people", async (req, res) => {
         url: item.url || "",
         image: item.image || "",
         location: (entity && entity.location) || "",
+        highlights: item.highlights || [],
       };
     });
 

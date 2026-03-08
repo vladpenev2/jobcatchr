@@ -306,8 +306,19 @@
       const company = document.getElementById("company").value;
       const role = document.getElementById("role").value;
       const location = document.getElementById("location").value;
+      // Build a natural language query (Exa works best with sentences, not keyword dumps)
+      let companyRef = company;
+      if (resolvedCompany && resolvedCompany.slug) {
+        companyRef = `${company} (linkedin.com/company/${resolvedCompany.slug})`;
+      } else {
+        const companyUrl = document.getElementById("companyLinkedinUrl").value.trim();
+        if (companyUrl) {
+          const slug = companyUrl.replace(/\/$/, "").split("/").pop();
+          if (slug) companyRef = `${company} (linkedin.com/company/${slug})`;
+        }
+      }
       document.getElementById("searchQuery").value =
-        `site:linkedin.com/in, ${company}, ${location}, ${role}, engineering manager, hiring manager, recruiter, talent acquisition`;
+        `${role} or hiring manager or recruiter at ${companyRef} in ${location}`;
       document.getElementById("searchCard").classList.add("visible");
     }
 
@@ -325,18 +336,34 @@
         const location = document.getElementById("location").value || "US";
         const countryCode = getCountryCode(location);
 
+        const company = document.getElementById("company").value.trim();
         const peopleRes = await fetch("/api/search-people", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, location: countryCode, numResults: 15 }),
+          body: JSON.stringify({ query, location: countryCode, numResults: 15, highlightsQuery: company }),
         });
 
         const peopleData = await peopleRes.json();
         if (!peopleRes.ok) throw new Error(peopleData.error);
 
-        searchResults = peopleData.people;
+        // Sort: people with company-matching highlights first
+        const companyLower = company.toLowerCase();
+        searchResults = peopleData.people.sort((a, b) => {
+          const aMatch = (a.highlights || []).some(h => h.toLowerCase().includes(companyLower))
+            || (a.title || "").toLowerCase().includes(companyLower);
+          const bMatch = (b.highlights || []).some(h => h.toLowerCase().includes(companyLower))
+            || (b.title || "").toLowerCase().includes(companyLower);
+          return bMatch - aMatch;
+        });
 
-        setStatus("searchStatus", "success", `Found ${searchResults.length} people`);
+        const confirmed = searchResults.filter(p =>
+          (p.highlights || []).some(h => h.toLowerCase().includes(companyLower))
+          || (p.title || "").toLowerCase().includes(companyLower)
+        ).length;
+        const statusMsg = confirmed === searchResults.length
+          ? `Found ${searchResults.length} people`
+          : `Found ${searchResults.length} people (${confirmed} confirmed at ${company})`;
+        setStatus("searchStatus", "success", statusMsg);
         renderResults();
         renderLinkedinUrls();
         scrollTo("resultsCard");
