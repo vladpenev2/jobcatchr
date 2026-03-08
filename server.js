@@ -80,7 +80,7 @@ app.post("/api/resolve-company", async (req, res) => {
   try {
     // dev_fusion/linkedin-company-scraper (no cookies needed)
     const run = await apify.actor("dev_fusion/linkedin-company-scraper").call({
-      urls: [companyLinkedinUrl],
+      profileUrls: [companyLinkedinUrl],
     });
 
     const { items } = await apify.dataset(run.defaultDatasetId).listItems();
