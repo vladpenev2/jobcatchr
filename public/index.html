@@ -422,6 +422,7 @@
       try {
         // Run profile extraction and company resolution in parallel
         const companyUrl = document.getElementById("companyLinkedinUrl").value.trim();
+        const companyName = document.getElementById("company").value.trim();
         const promises = [
           fetch("/api/extract-profile", {
             method: "POST",
@@ -429,12 +430,21 @@
             body: JSON.stringify({ linkedinUrl: url }),
           }),
         ];
+        // Resolve company: use LinkedIn URL if available, otherwise try by name
         if (companyUrl && companyUrl.includes("linkedin.com")) {
           promises.push(
             fetch("/api/resolve-company", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ companyLinkedinUrl: companyUrl }),
+            })
+          );
+        } else if (companyName) {
+          promises.push(
+            fetch("/api/resolve-company", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ companyName }),
             })
           );
         }

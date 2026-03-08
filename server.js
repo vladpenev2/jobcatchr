@@ -57,10 +57,18 @@ app.post("/api/extract-profile", async (req, res) => {
   }
 });
 
-// Resolve company LinkedIn URL to numeric ID (with caching)
+// Resolve company to numeric LinkedIn ID (with caching)
+// Accepts companyLinkedinUrl OR companyName (will guess the LinkedIn URL from name)
 app.post("/api/resolve-company", async (req, res) => {
-  const { companyLinkedinUrl } = req.body;
-  if (!companyLinkedinUrl) return res.status(400).json({ error: "companyLinkedinUrl required" });
+  let { companyLinkedinUrl, companyName } = req.body;
+
+  // If no LinkedIn URL but we have a name, try constructing one from the slugified name
+  if (!companyLinkedinUrl && companyName) {
+    const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    companyLinkedinUrl = `https://www.linkedin.com/company/${slug}`;
+  }
+
+  if (!companyLinkedinUrl) return res.status(400).json({ error: "companyLinkedinUrl or companyName required" });
 
   // Check cache first
   const cached = getCachedCompany(companyLinkedinUrl);
@@ -70,7 +78,8 @@ app.post("/api/resolve-company", async (req, res) => {
   }
 
   try {
-    const run = await apify.actor("curious_coder/linkedin-company-scraper").call({
+    // dev_fusion/linkedin-company-scraper (no cookies needed)
+    const run = await apify.actor("dev_fusion/linkedin-company-scraper").call({
       urls: [companyLinkedinUrl],
     });
 
@@ -79,12 +88,14 @@ app.post("/api/resolve-company", async (req, res) => {
 
     const company = items[0];
     const result = {
-      numericId: company.id || company.companyId || company.universal_name_id || null,
-      name: company.name || company.title || "",
-      slug: company.universal_name || company.slug || "",
+      numericId: String(company.companyId || ""),
+      name: company.companyName || "",
+      slug: company.universalName || "",
     };
 
-    cacheCompany(companyLinkedinUrl, result);
+    if (result.numericId) {
+      cacheCompany(companyLinkedinUrl, result);
+    }
     res.json(result);
   } catch (err) {
     console.error("Company resolve error:", err.message);
