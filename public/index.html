@@ -392,14 +392,12 @@
         const avatarImg = p.image
           ? `<img class="person-avatar" src="${escHtml(p.image)}" alt="" onerror="this.outerHTML='<div class=\\'person-avatar-placeholder\\'>${initials}</div>'">`
           : `<div class="person-avatar-placeholder">${initials}</div>`;
-        const location = p.location ? `<div class="person-location">${escHtml(p.location)}</div>` : "";
         return `
           <div class="person-row">
             <div class="avatar-wrap">${avatarImg}${badge}</div>
             <div class="person-info">
               <div class="person-name">${escHtml(name)}</div>
               <div class="person-title">${escHtml(title)}</div>
-              ${location}
             </div>
             <a class="person-link" href="${escHtml(p.url)}" target="_blank">LinkedIn</a>
           </div>`;
@@ -455,8 +453,7 @@
         let title = p.title || "";
         if (title.includes("|")) title = title.split("|").slice(1).join("|").trim();
         if (title.includes(" - ")) title = title.split(" - ").slice(1).join(" - ").trim();
-        const loc = p.location || "";
-        return `${p.name}, ${title}${loc ? ", " + loc : ""}, ${p.url}`;
+        return `${p.name}, ${title}, ${p.url}`;
       }).join("\n");
       navigator.clipboard.writeText(text).then(() => {
         const fb = document.getElementById("copyFeedback");
