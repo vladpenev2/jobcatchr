@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const { ApifyClient } = require("apify-client");
+const { getCachedProfile, cacheProfile, getCachedCompany, cacheCompany } = require("./db");
 
 const app = express();
 app.use(express.json());
@@ -9,10 +10,17 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const apify = new ApifyClient({ token: process.env.APIFY_API_TOKEN });
 
-// Extract candidate profile from LinkedIn URL
+// Extract candidate profile from LinkedIn URL (with caching)
 app.post("/api/extract-profile", async (req, res) => {
   const { linkedinUrl } = req.body;
   if (!linkedinUrl) return res.status(400).json({ error: "linkedinUrl required" });
+
+  // Check cache first
+  const cached = getCachedProfile(linkedinUrl);
+  if (cached) {
+    console.log("Profile cache hit:", linkedinUrl);
+    return res.json({ ...cached, cached: true });
+  }
 
   try {
     const run = await apify.actor("anchor/linkedin-profile-enrichment").call({
@@ -23,7 +31,7 @@ app.post("/api/extract-profile", async (req, res) => {
     if (!items.length) return res.status(404).json({ error: "No profile data returned" });
 
     const profile = items[0];
-    res.json({
+    const result = {
       fullName: profile.full_name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim(),
       headline: profile.headline || "",
       city: profile.city || "",
@@ -39,10 +47,48 @@ app.post("/api/extract-profile", async (req, res) => {
         field: e.field_of_study || e.field || "",
       })),
       skills: profile.skills || [],
-    });
+    };
+
+    cacheProfile(linkedinUrl, result);
+    res.json(result);
   } catch (err) {
     console.error("Profile extraction error:", err.message);
     res.status(500).json({ error: "Failed to extract profile: " + err.message });
+  }
+});
+
+// Resolve company LinkedIn URL to numeric ID (with caching)
+app.post("/api/resolve-company", async (req, res) => {
+  const { companyLinkedinUrl } = req.body;
+  if (!companyLinkedinUrl) return res.status(400).json({ error: "companyLinkedinUrl required" });
+
+  // Check cache first
+  const cached = getCachedCompany(companyLinkedinUrl);
+  if (cached) {
+    console.log("Company cache hit:", companyLinkedinUrl);
+    return res.json({ ...cached, cached: true });
+  }
+
+  try {
+    const run = await apify.actor("curious_coder/linkedin-company-scraper").call({
+      urls: [companyLinkedinUrl],
+    });
+
+    const { items } = await apify.dataset(run.defaultDatasetId).listItems();
+    if (!items.length) return res.status(404).json({ error: "No company data returned" });
+
+    const company = items[0];
+    const result = {
+      numericId: company.id || company.companyId || company.universal_name_id || null,
+      name: company.name || company.title || "",
+      slug: company.universal_name || company.slug || "",
+    };
+
+    cacheCompany(companyLinkedinUrl, result);
+    res.json(result);
+  } catch (err) {
+    console.error("Company resolve error:", err.message);
+    res.status(500).json({ error: "Failed to resolve company: " + err.message });
   }
 });
 
@@ -75,23 +121,24 @@ app.post("/api/search-people", async (req, res) => {
   }
 });
 
-// Construct LinkedIn search URLs
+// Construct LinkedIn search URLs (now uses numeric IDs properly)
 app.post("/api/build-linkedin-urls", async (req, res) => {
-  const { companyLinkedinId, pastCompanyIds, schoolIds } = req.body;
-  if (!companyLinkedinId) return res.status(400).json({ error: "companyLinkedinId required" });
+  const { companyNumericId, pastCompanyIds, schoolIds } = req.body;
+  if (!companyNumericId) return res.status(400).json({ error: "companyNumericId required" });
 
   const baseUrl = "https://www.linkedin.com/search/results/people/";
+  const companyFilter = encodeURIComponent(JSON.stringify([companyNumericId]));
 
   let pastCompanyUrl = null;
   if (pastCompanyIds && pastCompanyIds.length) {
-    const encoded = encodeURIComponent(JSON.stringify(pastCompanyIds));
-    pastCompanyUrl = `${baseUrl}?currentCompany=${companyLinkedinId}&pastCompany=${encoded}`;
+    const pastFilter = encodeURIComponent(JSON.stringify(pastCompanyIds));
+    pastCompanyUrl = `${baseUrl}?currentCompany=${companyFilter}&pastCompany=${pastFilter}`;
   }
 
   let schoolUrl = null;
   if (schoolIds && schoolIds.length) {
-    const encoded = encodeURIComponent(JSON.stringify(schoolIds));
-    schoolUrl = `${baseUrl}?currentCompany=${companyLinkedinId}&schoolFilter=${encoded}`;
+    const schoolFilter = encodeURIComponent(JSON.stringify(schoolIds));
+    schoolUrl = `${baseUrl}?currentCompany=${companyFilter}&schoolFilter=${schoolFilter}`;
   }
 
   res.json({ pastCompanyUrl, schoolUrl });

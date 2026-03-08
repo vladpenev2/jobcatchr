@@ -306,8 +306,8 @@
           <input type="text" id="company" placeholder="e.g. Slalom">
         </div>
         <div class="field">
-          <label>Company LinkedIn ID</label>
-          <input type="text" id="companyLinkedinId" placeholder="e.g. 166000">
+          <label>Company LinkedIn URL</label>
+          <input type="text" id="companyLinkedinUrl" placeholder="e.g. https://www.linkedin.com/company/slalom">
         </div>
       </div>
       <div class="row">
@@ -374,10 +374,13 @@
     let extractedProfile = null;
     let searchResults = [];
     let linkedinUrlData = { pastCompanyUrl: null, schoolUrl: null };
+    let resolvedCompany = null; // { numericId, name, slug }
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("company")) document.getElementById("company").value = params.get("company");
-    if (params.get("companyLinkedinId")) document.getElementById("companyLinkedinId").value = params.get("companyLinkedinId");
+    if (params.get("companyLinkedinUrl")) document.getElementById("companyLinkedinUrl").value = params.get("companyLinkedinUrl");
+    // Backwards compat: accept old param name too
+    if (params.get("companyLinkedinId")) document.getElementById("companyLinkedinUrl").value = params.get("companyLinkedinId");
     if (params.get("role")) document.getElementById("role").value = params.get("role");
     if (params.get("location")) document.getElementById("location").value = params.get("location");
     if (params.get("linkedin")) document.getElementById("linkedinUrl").value = params.get("linkedin");
@@ -417,18 +420,42 @@
       updateSteps(2);
 
       try {
-        const res = await fetch("/api/extract-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ linkedinUrl: url }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        // Run profile extraction and company resolution in parallel
+        const companyUrl = document.getElementById("companyLinkedinUrl").value.trim();
+        const promises = [
+          fetch("/api/extract-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ linkedinUrl: url }),
+          }),
+        ];
+        if (companyUrl && companyUrl.includes("linkedin.com")) {
+          promises.push(
+            fetch("/api/resolve-company", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ companyLinkedinUrl: companyUrl }),
+            })
+          );
+        }
 
-        extractedProfile = data;
-        setStatus("profileStatus", "success", "Profile extracted successfully");
-        renderProfile(data);
-        generateSearchQuery(data);
+        const responses = await Promise.all(promises);
+        const profileData = await responses[0].json();
+        if (!responses[0].ok) throw new Error(profileData.error);
+
+        if (responses[1]) {
+          const companyData = await responses[1].json();
+          if (responses[1].ok && companyData.numericId) {
+            resolvedCompany = companyData;
+          }
+        }
+
+        extractedProfile = profileData;
+        const cacheMsg = profileData.cached ? " (cached)" : "";
+        const companyMsg = resolvedCompany ? (resolvedCompany.cached ? " | Company resolved (cached)" : " | Company resolved") : "";
+        setStatus("profileStatus", "success", "Profile extracted" + cacheMsg + companyMsg);
+        renderProfile(profileData);
+        generateSearchQuery(profileData);
         updateSteps(3);
       } catch (err) {
         setStatus("profileStatus", "error", "Error: " + err.message);
@@ -475,30 +502,18 @@
 
       try {
         const location = document.getElementById("location").value || "US";
-        const companyLinkedinId = document.getElementById("companyLinkedinId").value;
         const countryCode = getCountryCode(location);
-        const pastCompanyIds = [];
-        const schoolIds = [];
 
-        const [peopleRes, urlsRes] = await Promise.all([
-          fetch("/api/search-people", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query, location: countryCode, numResults: 15 }),
-          }),
-          fetch("/api/build-linkedin-urls", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ companyLinkedinId, pastCompanyIds, schoolIds }),
-          }),
-        ]);
+        const peopleRes = await fetch("/api/search-people", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, location: countryCode, numResults: 15 }),
+        });
 
         const peopleData = await peopleRes.json();
-        const urlsData = await urlsRes.json();
         if (!peopleRes.ok) throw new Error(peopleData.error);
 
         searchResults = peopleData.people;
-        linkedinUrlData = urlsData;
 
         setStatus("searchStatus", "success", `Found ${searchResults.length} people`);
         renderResults();
@@ -533,25 +548,30 @@
 
     function renderLinkedinUrls() {
       const container = document.getElementById("linkedinUrls");
-      const companyId = document.getElementById("companyLinkedinId").value;
+      const companyId = resolvedCompany ? resolvedCompany.numericId : null;
       let html = "";
 
-      if (extractedProfile) {
+      if (!companyId) {
+        html = '<div style="color:#8792a2; font-size:13px;">No company LinkedIn ID resolved. Provide a company LinkedIn URL to enable connection URLs.</div>';
+      } else if (extractedProfile) {
+        const companyFilter = encodeURIComponent(JSON.stringify([companyId]));
         const pastCompanies = extractedProfile.experiences.map(e => e.company).filter(Boolean);
-        if (pastCompanies.length && companyId) {
+        if (pastCompanies.length) {
           const keywords = pastCompanies.slice(0, 3).join(" OR ");
-          const url = `https://www.linkedin.com/search/results/people/?currentCompany=["${companyId}"]&keywords=${encodeURIComponent(keywords)}`;
+          const url = `https://www.linkedin.com/search/results/people/?currentCompany=${companyFilter}&keywords=${encodeURIComponent(keywords)}`;
           html += `<a class="linkedin-link" href="${url}" target="_blank">From Previous Companies: ${pastCompanies.slice(0, 3).join(", ")}</a>`;
         }
         const schools = extractedProfile.education.map(e => e.school).filter(Boolean);
-        if (schools.length && companyId) {
+        if (schools.length) {
           const keywords = schools.join(" OR ");
-          const url = `https://www.linkedin.com/search/results/people/?currentCompany=["${companyId}"]&keywords=${encodeURIComponent(keywords)}`;
+          const url = `https://www.linkedin.com/search/results/people/?currentCompany=${companyFilter}&keywords=${encodeURIComponent(keywords)}`;
           html += `<a class="linkedin-link" href="${url}" target="_blank">From Schools: ${schools.join(", ")}</a>`;
+        }
+        if (!pastCompanies.length && !schools.length) {
+          html = '<div style="color:#8792a2; font-size:13px;">No past companies or schools found in profile</div>';
         }
       }
 
-      if (!html) html = '<div style="color:#8792a2; font-size:13px;">No past companies or schools found in profile</div>';
       container.innerHTML = html;
       document.getElementById("linkedinCard").classList.add("visible");
     }
