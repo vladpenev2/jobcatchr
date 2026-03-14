@@ -95,7 +95,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (source) {
-    query = query.eq('source', source)
+    // Support filtering by source category (linkedin, career-site) or specific source name
+    if (source === 'linkedin' || source === 'career-site') {
+      query = query.eq('source', source)
+    } else {
+      query = query.eq('source_name', source)
+    }
   }
 
   query = query

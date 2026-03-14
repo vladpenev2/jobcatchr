@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { JobTabs } from './job-tabs'
 import { JobFilters, FilterState } from './job-filters'
 import { JobTable, Job } from './job-table'
@@ -122,6 +123,8 @@ export function JobsPage({ refreshKey = 0 }: JobsPageProps) {
     // Update selected job if open
     setSelectedJob((prev) => (prev?.id === jobId ? { ...prev, saved } : prev))
 
+    toast.success(saved ? 'Job saved' : 'Job unsaved')
+
     // Update saved count
     setSavedCount((prev) => (saved ? prev + 1 : Math.max(0, prev - 1)))
 
@@ -159,7 +162,7 @@ export function JobsPage({ refreshKey = 0 }: JobsPageProps) {
           />
         </div>
 
-        <JobFilters filters={filters} onFiltersChange={handleFiltersChange} />
+        <JobFilters filters={filters} onFiltersChange={handleFiltersChange} jobs={jobs} />
 
         <JobTable
           jobs={jobs}
