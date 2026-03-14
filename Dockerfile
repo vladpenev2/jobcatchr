@@ -11,7 +11,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_SUPABASE_URL=https://bhynmvikdjaorevprdkg.supabase.co
-ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoeW5tdmlrZGphb3JldnByZGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0OTIxNDIsImV4cCI6MjA4OTA2ODE0Mn0.Rxdg8JpIhCe0FUiJ4d4H3lWe6k1B7rJL5xrGiYWDbrg
+ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xv_0YbI_v5KllTesCfcSoQ_ORlt_fRw
 RUN npm run build
 
 FROM base AS runner
