@@ -1,115 +1,72 @@
 # ROADMAP — v1.0
 
-## Wave 1: Foundation (sequential - must go first)
+## Phase 1: Foundation (sequential)
 
-### Phase 1: Database & Auth Foundation
-**Goal:** Supabase schema, auth config, middleware, and base layout with shadcn
-**Why first:** Everything else depends on the database schema and auth
-- Run schema.sql migration via Supabase MCP
-- Set up Supabase client (server + browser)
-- Auth middleware (protected routes, admin check)
-- Base app layout: nav bar, user menu, login page
+**Goal:** Database, auth, layout, login, admin panel, Vitest - everything the parallel agents need
+**Why first:** All features depend on schema, auth, and app shell
+
+- Run schema.sql migration (fix pg_trgm ordering)
+- Supabase clients (browser, server, server-admin)
+- Auth proxy (proxy.ts, route protection)
+- Base layout: dark theme, nav bar, user menu
+- Login page
+- Admin panel: user CRUD, LinkedIn profile extraction on create, re-sync
 - Admin route guard
-- Vitest + testing setup
+- Settings page: view/edit profile, re-sync LinkedIn, change password
+- Vitest setup
 
 ---
 
-## Wave 2: Core Features (parallel - 3 agents in worktrees)
+## Phase 2: Features (3 parallel agents in worktrees)
 
-### Phase 2: Job Source Adapters & Search API
-**Goal:** Apify integration layer + search endpoint with SSE progress
-**Dependencies:** Phase 1 (database + auth)
-**Owns:** `src/lib/adapters/`, `src/app/api/search/`, `src/app/api/cron/`
+### Agent A: Search System
+**Goal:** Apify adapters + search API + search form + SSE progress + cron jobs
+**Owns:** `src/lib/adapters/`, `src/app/api/search/`, `src/app/api/cron/`, `src/components/search/`
 - Base adapter interface + types
-- Career Site Feed adapter (normalize Apify output -> Job schema)
-- LinkedIn Search adapter (normalize Apify output -> Job schema)
+- Career Site Feed adapter
+- LinkedIn Search adapter
 - Search controller (parallel dispatch, dedup, upsert)
 - SSE search endpoint with progress streaming
-- Cron endpoints: expire-jobs, refresh-searches
-- Vitest for all adapters and search logic
+- Search criteria form (titles, exclusions, keywords, location combobox, time range)
+- Location combobox with country-state-city package
+- Search history, save & schedule, re-run
+- Cron: expire-jobs, refresh-searches
 
-### Phase 3: Job List & Detail UI
-**Goal:** Main job browsing experience with table, filters, side drawer
-**Dependencies:** Phase 1 (database + auth + layout)
-**Owns:** `src/app/(app)/page.tsx`, `src/components/jobs/`, `src/app/api/jobs/`
-- Job list page with data table (shadcn)
-- Tabs: All Jobs, Saved
+### Agent B: Job List & Detail
+**Goal:** Main job browsing UI + Glassdoor reviews tab
+**Owns:** `src/components/jobs/`, `src/app/api/jobs/`, main page job list
+- Job list data table (All Jobs + Saved tabs)
 - Table columns: title, company+logo, location, posted, source, seen, status, save
-- Search/filter bar (text search, status filter, source filter)
-- Sort by posted date, title, company
-- Pagination
-- Job detail side drawer (Sheet)
-- Drawer tabs: About (description), Company (LinkedIn org data)
-- View job, save job, delete job actions
+- Search/filter bar, sort, pagination
+- Job detail side drawer (About tab, Company tab, Glassdoor tab)
+- Glassdoor reviews: on-demand fetch via Apify, 30-day cache, rating + review cards
+- Job API routes (list, detail, delete, view, save, glassdoor)
 - Mark as viewed on open
-- Job API routes (GET list, GET detail, DELETE, POST view, POST save)
-- Vitest for API routes
 
-### Phase 4: Admin Panel
-**Goal:** User management for admin
-**Dependencies:** Phase 1 (database + auth)
-**Owns:** `src/app/(app)/admin/`, `src/app/api/admin/`, `src/lib/apify/profile.ts`
-- Admin page with user data table
-- Create user form: name, email, LinkedIn URL, location, auto-generated password
-- On create: Supabase auth user + extract LinkedIn profile via Apify
-- User list: name, email, location, last login, sync status
-- Edit user, re-sync LinkedIn profile
-- Admin API routes
-- Vitest for admin logic
-
----
-
-## Wave 3: Enrichment Features (parallel - 2 agents in worktrees)
-
-### Phase 5: Find People (Insider Connections)
-**Goal:** Full-page insider connections search per job
-**Dependencies:** Phase 3 (job detail for navigation), Phase 1 (profiles with extracted data)
+### Agent C: Find People
+**Goal:** Insider connections search per job
 **Owns:** `src/app/(app)/jobs/[id]/find-people/`, `src/app/api/jobs/[id]/find-people/`, `src/lib/apify/people.ts`
-- Find People page at /jobs/[id]/find-people
+- Find People full page at /jobs/[id]/find-people
 - Auto-generate search query from job + user profile
-- Editable query before search
-- Exa.ai search via Apify actor
+- Editable query, run Exa.ai search via Apify
 - Results as cards (avatar, name, title, LinkedIn link)
 - LinkedIn search URLs (past companies, schools)
 - Copy all results
+- Company resolution (numeric IDs) via company_cache
 - Cache results in people_searches table
-- Company resolution (LinkedIn numeric IDs) via company_cache
-- Vitest for people search logic
-
-### Phase 6: Glassdoor Reviews & Settings
-**Goal:** Glassdoor tab in job detail + user settings page
-**Dependencies:** Phase 3 (job detail drawer for Glassdoor tab)
-**Owns:** `src/app/(app)/settings/`, `src/app/api/jobs/[id]/glassdoor/`, `src/components/jobs/glassdoor-tab.tsx`
-- Glassdoor Reviews tab in job detail drawer
-- On-demand fetch via Apify actor, 30-day cache
-- Display: overall rating, review cards (pros/cons/advice)
-- Settings page: view/edit name/location, LinkedIn URL (read-only)
-- Re-sync LinkedIn profile button
-- Change password
-- Vitest for Glassdoor and settings logic
 
 ---
 
-## Wave 4: Integration & Polish (sequential)
+## Phase 3: Integration & Deploy (sequential)
 
-### Phase 7: Search UX & Saved Searches
-**Goal:** Connect search form to API, search history, scheduling
-**Dependencies:** Phase 2 (search API), Phase 3 (job list)
-**Owns:** `src/components/search/`, search form on main page
-- Search criteria form (titles, exclusions, keywords, location combobox, time range)
-- Location combobox with country-state-city package
-- Connect to SSE search endpoint with real-time progress UI
-- Search history display
-- Save & Schedule option (daily/weekly)
-- Re-run saved searches
-- Vitest for search form logic
+**Goal:** Merge worktrees, wire everything together, deploy
+**Dependencies:** All Phase 2 agents complete
 
-### Phase 8: Integration Testing & Deploy
-**Goal:** End-to-end verification, Dockerfile, Railway deploy
-**Dependencies:** All previous phases
-- Integration tests across all features
-- Dockerfile for Next.js on Railway
-- Environment variable validation
+- Merge all worktree branches, resolve any conflicts
+- Connect search form results to job list (refresh after search)
+- Connect job detail "Find People" button to /jobs/[id]/find-people
 - Error boundaries and loading states
+- Integration tests across features
+- Dockerfile for Next.js on Railway
 - Final build verification
 - Deploy to Railway

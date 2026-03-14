@@ -4,7 +4,7 @@
 1
 
 ## Status
-not_started
+in_progress
 
 ## Decisions
 - Using Career Site Feed ($0.80/1K) not Career Site API ($4/1K)
