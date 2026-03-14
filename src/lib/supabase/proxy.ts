@@ -1,12 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { supabaseUrl, supabaseAnonKey } from './config'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -23,12 +24,10 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: use getUser() not getSession() - getUser() validates JWT with Supabase Auth server
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Unauthenticated -> redirect to /login (except /login and /auth paths)
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
@@ -39,7 +38,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Authenticated on /login -> redirect to /
   if (user && request.nextUrl.pathname.startsWith('/login')) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
