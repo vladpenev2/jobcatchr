@@ -1,8 +1,17 @@
+'use client'
+
+import { useState } from 'react'
 import { SearchForm } from '@/components/search/search-form'
 import { SearchHistory } from '@/components/search/search-history'
 import { JobsPage } from '@/components/jobs/jobs-page'
 
 export default function HomePage() {
+  const [searchVersion, setSearchVersion] = useState(0)
+
+  function handleSearchComplete(_searchId: string) {
+    setSearchVersion((v) => v + 1)
+  }
+
   return (
     <div className="space-y-8">
       <div className="mx-auto max-w-3xl space-y-8">
@@ -13,7 +22,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <SearchForm />
+        <SearchForm onSearchComplete={handleSearchComplete} />
 
         <div>
           <h2 className="mb-3 text-lg font-semibold">Search History</h2>
@@ -21,7 +30,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <JobsPage />
+      <JobsPage refreshKey={searchVersion} />
     </div>
   )
 }

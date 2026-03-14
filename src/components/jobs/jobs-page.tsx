@@ -14,7 +14,11 @@ const DEFAULT_FILTERS: FilterState = {
   order: 'desc',
 }
 
-export function JobsPage() {
+interface JobsPageProps {
+  refreshKey?: number
+}
+
+export function JobsPage({ refreshKey = 0 }: JobsPageProps) {
   const [tab, setTab] = useState<'all' | 'saved'>('all')
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
@@ -85,11 +89,11 @@ export function JobsPage() {
 
   useEffect(() => {
     fetchTabCounts()
-  }, [fetchTabCounts])
+  }, [fetchTabCounts, refreshKey])
 
   useEffect(() => {
     fetchJobs(tab, filters, page)
-  }, [tab, filters, page, fetchJobs])
+  }, [tab, filters, page, fetchJobs, refreshKey])
 
   function handleTabChange(newTab: 'all' | 'saved') {
     setTab(newTab)
