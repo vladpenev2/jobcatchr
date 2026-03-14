@@ -92,8 +92,6 @@ export function JobFilters({ filters, onFiltersChange, jobs }: JobFiltersProps) 
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Sources</SelectItem>
-          <SelectItem value="linkedin">LinkedIn (all)</SelectItem>
-          <SelectItem value="career-site">Career Sites (all)</SelectItem>
           {sourceOptions.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               <span className="inline-flex items-center gap-1.5">

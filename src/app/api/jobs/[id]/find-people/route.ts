@@ -158,7 +158,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   // Run Exa.ai people search
   let people = []
   try {
-    people = await searchPeople(query, userLocation, 10, highlightsQuery)
+    people = await searchPeople(query, userLocation, 25, highlightsQuery)
   } catch (err) {
     console.error('People search error:', err)
     return NextResponse.json(
