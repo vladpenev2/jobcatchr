@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RefreshCw, Clock, Calendar, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDateTime } from '@/lib/utils'
 
 interface Search {
   id: string
@@ -41,14 +42,9 @@ function formatCriteriaSummary(search: Search): string {
   return parts.join(' ') || 'All jobs'
 }
 
-function formatDate(dateStr: string | null): string {
+function formatLastRun(dateStr: string | null): string {
   if (!dateStr) return 'Never'
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDateTime(dateStr)
 }
 
 export function SearchHistory({ onRerunComplete }: SearchHistoryProps) {
@@ -183,7 +179,7 @@ export function SearchHistory({ onRerunComplete }: SearchHistoryProps) {
                 </span>
                 <span>{search.job_count ?? 0} jobs</span>
                 {search.last_run_at && (
-                  <span>Last run {formatDate(search.last_run_at)}</span>
+                  <span>Last run {formatLastRun(search.last_run_at)}</span>
                 )}
                 {search.is_scheduled && (
                   <Badge variant="secondary" className="h-4 px-1.5 text-xs">

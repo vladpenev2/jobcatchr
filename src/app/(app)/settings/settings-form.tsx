@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { formatDateTime } from '@/lib/utils'
 
 interface Profile {
   name: string
@@ -37,9 +38,9 @@ export function SettingsForm({ profile }: SettingsFormProps) {
     setSyncMessage(null)
     try {
       const res = await fetch('/api/profile/sync', { method: 'POST' })
-      const data = await res.json()
+      const data = await res.json().catch(() => null)
       if (!res.ok) {
-        setSyncMessage(data.error ?? 'Sync failed')
+        setSyncMessage(data?.error ?? 'Sync failed')
       } else {
         setSyncMessage('LinkedIn profile synced successfully')
       }
@@ -51,13 +52,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
   }
 
   const formattedSyncDate = profile.profile_synced_at
-    ? new Date(profile.profile_synced_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+    ? formatDateTime(profile.profile_synced_at)
     : 'Never'
 
   return (
@@ -91,15 +86,14 @@ export function SettingsForm({ profile }: SettingsFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>LinkedIn URL</Label>
+              <Label htmlFor="linkedin_url">LinkedIn URL</Label>
               <Input
-                value={profile.linkedin_url ?? 'Not set'}
-                readOnly
-                className="bg-muted text-muted-foreground"
+                id="linkedin_url"
+                name="linkedin_url"
+                type="url"
+                placeholder="https://linkedin.com/in/yourprofile"
+                defaultValue={profile.linkedin_url ?? ''}
               />
-              <p className="text-xs text-muted-foreground">
-                LinkedIn URL is managed by your admin
-              </p>
             </div>
             {profileState?.error && (
               <p className="text-sm text-destructive">{profileState.error}</p>

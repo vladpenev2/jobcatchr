@@ -76,3 +76,17 @@ Schema in `scope/schema.sql`. Key tables: `profiles`, `jobs`, `searches`, `searc
 | `dev_fusion/linkedin-company-scraper` | Resolve company LinkedIn IDs |
 
 Actor documentation (input schemas, output fields, pricing) is in `scope/*.md`.
+
+## Browser Testing
+
+Use `playwright-cli` for browser automation and testing. Skills are installed at `.claude/skills/playwright-cli/`.
+
+```bash
+playwright-cli open http://localhost:3002 --headed   # Open browser
+playwright-cli snapshot                               # Get element refs
+playwright-cli fill e5 "test@example.com"            # Fill input by ref
+playwright-cli click e10                              # Click by ref
+playwright-cli screenshot                             # Capture screenshot
+```
+
+Workflow: `open` -> `snapshot` -> interact using refs -> `snapshot` again after navigation/DOM changes. Always re-snapshot after clicks that change the page. The dev server runs on port 3002.

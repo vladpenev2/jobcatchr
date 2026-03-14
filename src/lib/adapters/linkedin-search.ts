@@ -59,6 +59,7 @@ export class LinkedInSearchAdapter extends BaseAdapter {
       id: item.id as string,
       source: 'linkedin',
       source_actor: this.actorId,
+      source_name: 'LinkedIn',
       title: item.title as string,
       organization: (item.organization as string) ?? null,
       organization_url: (item.organization_url as string) ?? null,

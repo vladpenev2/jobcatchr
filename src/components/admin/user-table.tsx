@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { RefreshCwIcon, PencilIcon } from "lucide-react"
+import { formatDate, formatDateTime } from "@/lib/utils"
 
 interface User {
   id: string
@@ -95,13 +96,14 @@ export function UserTable({ users, onRefresh }: UserTableProps) {
     }
   }
 
-  function formatDate(dateStr: string | null): string {
+  function formatDateOrDash(dateStr: string | null): string {
     if (!dateStr) return "—"
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
+    return formatDate(dateStr)
+  }
+
+  function formatDateTimeOrDash(dateStr: string | null): string {
+    if (!dateStr) return "—"
+    return formatDateTime(dateStr)
   }
 
   return (
@@ -134,14 +136,14 @@ export function UserTable({ users, onRefresh }: UserTableProps) {
                   <TableCell>
                     {user.profile_synced_at ? (
                       <Badge variant="secondary">
-                        Synced {formatDate(user.profile_synced_at)}
+                        Synced {formatDateTimeOrDash(user.profile_synced_at)}
                       </Badge>
                     ) : (
                       <Badge variant="outline">Pending</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatDate(user.created_at)}
+                    {formatDateOrDash(user.created_at)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

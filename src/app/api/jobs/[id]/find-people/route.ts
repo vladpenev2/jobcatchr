@@ -114,12 +114,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   // Resolve user's past company numeric IDs in parallel
   const pastCompanyIds: string[] = []
-  if (profileData?.experiences?.length) {
+  const targetCompanyName = job.organization?.toLowerCase() ?? ''
+  const pastExperiences = (profileData?.experiences ?? [])
+    .filter((exp) => exp.company)
+    .filter((exp) => exp.company.toLowerCase() !== targetCompanyName)
+    .slice(0, 5)
+
+  if (pastExperiences.length > 0) {
     const pastCompanyResults = await Promise.allSettled(
-      profileData.experiences
-        .filter((exp) => exp.companyLinkedinUrl)
-        .slice(0, 5) // Limit to 5 past companies
-        .map((exp) => resolveCompanyId(exp.companyLinkedinUrl))
+      pastExperiences.map((exp) => {
+        // Use LinkedIn URL if available, otherwise resolve by name
+        if (exp.companyLinkedinUrl && exp.companyLinkedinUrl.includes('linkedin.com')) {
+          return resolveCompanyId(exp.companyLinkedinUrl)
+        }
+        return resolveCompanyByName(exp.company)
+      })
     )
 
     for (const result of pastCompanyResults) {
@@ -130,14 +139,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   // Build LinkedIn search URLs
+  const pastCompanyNames = pastExperiences.map((e) => e.company).filter(Boolean)
+  const schoolNames = (profileData?.education ?? [])
+    .map((edu) => edu.school)
+    .filter(Boolean)
+    .slice(0, 3)
+
   let linkedInUrls = { pastCompanyUrl: null as string | null, schoolUrl: null as string | null }
   if (targetCompanyNumericId) {
-    const schoolIds = (profileData?.education ?? [])
-      .map((edu) => edu.school)
-      .filter(Boolean)
-      .slice(0, 3)
-
-    linkedInUrls = buildLinkedInUrls(targetCompanyNumericId, pastCompanyIds, schoolIds)
+    linkedInUrls = buildLinkedInUrls(
+      targetCompanyNumericId,
+      pastCompanyIds,
+      pastCompanyNames,
+      schoolNames
+    )
   }
 
   // Run Exa.ai people search

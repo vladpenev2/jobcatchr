@@ -41,6 +41,7 @@ yarn-error.log*
 # project-specific
 .claude/mcp.json
 .playwright-mcp
+.playwright-cli
 
 # typescript
 *.tsbuildinfo

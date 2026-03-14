@@ -2,6 +2,7 @@ export interface UnifiedJob {
   id: string
   source: 'career-site' | 'linkedin'
   source_actor: string
+  source_name?: string | null
   title: string
   organization?: string | null
   organization_url?: string | null

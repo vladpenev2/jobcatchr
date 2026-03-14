@@ -19,12 +19,13 @@ export async function updateProfile(
 
   const name = (formData.get('name') as string)?.trim()
   const location = (formData.get('location') as string)?.trim()
+  const linkedin_url = (formData.get('linkedin_url') as string)?.trim()
 
   if (!name) return { error: 'Name is required' }
 
   const { error } = await supabase
     .from('profiles')
-    .update({ name, location: location || null })
+    .update({ name, location: location || null, linkedin_url: linkedin_url || null })
     .eq('id', user.id)
 
   if (error) return { error: error.message }

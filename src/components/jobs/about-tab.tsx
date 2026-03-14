@@ -98,7 +98,7 @@ export function AboutTab({ job }: AboutTabProps) {
             </h3>
             {job.description_html ? (
               <div
-                className="text-sm text-muted-foreground prose prose-sm max-w-none prose-headings:text-foreground prose-a:text-primary"
+                className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-a:text-primary"
                 dangerouslySetInnerHTML={{ __html: job.description_html }}
               />
             ) : (

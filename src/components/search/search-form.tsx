@@ -1,39 +1,21 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { SearchProgressDisplay } from './search-progress'
-import { ChevronsUpDown, Check, Search } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Search, Square } from 'lucide-react'
 import type { SearchProgress } from '@/lib/adapters/types'
 
-// Country list - using static list for predictable SSR
-const COUNTRIES = [
+const QUICK_LOCATIONS = [
   'United Arab Emirates',
   'Saudi Arabia',
   'Qatar',
-  'Kuwait',
-  'Bahrain',
-  'Oman',
-  'Egypt',
-  'Jordan',
-  'Lebanon',
-  'United Kingdom',
-  'United States',
-  'Germany',
-  'France',
-  'Netherlands',
-  'Switzerland',
-  'Singapore',
-  'Australia',
-  'Canada',
-  'India',
-  'Pakistan',
+  'Dubai',
+  'Abu Dhabi',
+  'Remote',
 ]
 
 type TimeRange = '1h' | '24h' | '7d' | '6m'
@@ -46,11 +28,17 @@ export function SearchForm({ onSearchComplete }: SearchFormProps) {
   const [titleSearch, setTitleSearch] = useState('')
   const [titleExclusion, setTitleExclusion] = useState('')
   const [keywords, setKeywords] = useState('')
-  const [location, setLocation] = useState('')
-  const [locationOpen, setLocationOpen] = useState(false)
+  const [locations, setLocations] = useState('')
   const [timeRange, setTimeRange] = useState<TimeRange>('7d')
   const [isRunning, setIsRunning] = useState(false)
   const [progressEvents, setProgressEvents] = useState<SearchProgress[]>([])
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const addQuickLocation = (loc: string) => {
+    const current = parseList(locations)
+    if (current.includes(loc)) return
+    setLocations(current.length > 0 ? `${locations}, ${loc}` : loc)
+  }
 
   const parseList = (value: string): string[] =>
     value
@@ -66,11 +54,14 @@ export function SearchForm({ onSearchComplete }: SearchFormProps) {
       setIsRunning(true)
       setProgressEvents([])
 
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+
       const criteria = {
         titleSearch: parseList(titleSearch),
         titleExclusion: parseList(titleExclusion),
         keywords: parseList(keywords),
-        locationSearch: location ? [location] : [],
+        locationSearch: parseList(locations),
         timeRange,
         sourcesEnabled: ['career-site', 'linkedin'],
       }
@@ -80,6 +71,7 @@ export function SearchForm({ onSearchComplete }: SearchFormProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(criteria),
+          signal: abortController.signal,
         })
 
         if (!response.ok || !response.body) {
@@ -112,13 +104,18 @@ export function SearchForm({ onSearchComplete }: SearchFormProps) {
           }
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Search failed'
-        setProgressEvents((prev) => [...prev, { stage: 'error', status: 'error', message }])
+        if (abortController.signal.aborted) {
+          setProgressEvents((prev) => [...prev, { stage: 'cancelled', status: 'error', message: 'Search cancelled' }])
+        } else {
+          const message = error instanceof Error ? error.message : 'Search failed'
+          setProgressEvents((prev) => [...prev, { stage: 'error', status: 'error', message }])
+        }
       } finally {
+        abortControllerRef.current = null
         setIsRunning(false)
       }
     },
-    [isRunning, titleSearch, titleExclusion, keywords, location, timeRange, onSearchComplete]
+    [isRunning, titleSearch, titleExclusion, keywords, locations, timeRange, onSearchComplete]
   )
 
   return (
@@ -163,55 +160,25 @@ export function SearchForm({ onSearchComplete }: SearchFormProps) {
 
           {/* Location */}
           <div className="space-y-1.5">
-            <Label>Location</Label>
-            <Popover open={locationOpen} onOpenChange={setLocationOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={locationOpen}
-                  className="w-full justify-between font-normal"
+            <Label htmlFor="locations">Location</Label>
+            <Input
+              id="locations"
+              placeholder="e.g. Dubai, Bulgaria, London"
+              value={locations}
+              onChange={(e) => setLocations(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-1">
+              {QUICK_LOCATIONS.map((loc) => (
+                <button
+                  key={loc}
+                  type="button"
+                  onClick={() => addQuickLocation(loc)}
+                  className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
                 >
-                  {location || 'Select country...'}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search country..." />
-                  <CommandList>
-                    <CommandEmpty>No country found.</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem
-                        value=""
-                        onSelect={() => {
-                          setLocation('')
-                          setLocationOpen(false)
-                        }}
-                      >
-                        <Check className={cn('mr-2 h-4 w-4', location === '' ? 'opacity-100' : 'opacity-0')} />
-                        Any location
-                      </CommandItem>
-                      {COUNTRIES.map((country) => (
-                        <CommandItem
-                          key={country}
-                          value={country}
-                          onSelect={(value) => {
-                            setLocation(value)
-                            setLocationOpen(false)
-                          }}
-                        >
-                          <Check
-                            className={cn('mr-2 h-4 w-4', location === country ? 'opacity-100' : 'opacity-0')}
-                          />
-                          {country}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                  + {loc}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -233,10 +200,23 @@ export function SearchForm({ onSearchComplete }: SearchFormProps) {
           </ToggleGroup>
         </div>
 
-        <Button type="submit" disabled={isRunning} className="w-full sm:w-auto">
-          <Search className="mr-2 h-4 w-4" />
-          {isRunning ? 'Searching...' : 'Start Search'}
-        </Button>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={isRunning} className="w-full sm:w-auto">
+            <Search className="mr-2 h-4 w-4" />
+            {isRunning ? 'Searching...' : 'Start Search'}
+          </Button>
+          {isRunning && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => abortControllerRef.current?.abort()}
+              className="w-full sm:w-auto"
+            >
+              <Square className="mr-2 h-4 w-4" />
+              Stop
+            </Button>
+          )}
+        </div>
       </form>
 
       <SearchProgressDisplay events={progressEvents} isRunning={isRunning} />

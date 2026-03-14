@@ -52,6 +52,7 @@ export class CareerSiteFeedAdapter extends BaseAdapter {
       id: item.id as string,
       source: 'career-site',
       source_actor: this.actorId,
+      source_name: (item.source as string) ?? null,
       title: item.title as string,
       organization: (item.organization as string) ?? null,
       organization_url: (item.organization_url as string) ?? null,

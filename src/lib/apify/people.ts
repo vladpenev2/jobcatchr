@@ -14,6 +14,26 @@ export interface LinkedInUrls {
   schoolUrl: string | null
 }
 
+// Map common location strings to ISO codes for Exa API
+const LOCATION_TO_ISO: Record<string, string> = {
+  'united arab emirates': 'AE', 'uae': 'AE', 'dubai': 'AE', 'abu dhabi': 'AE',
+  'saudi arabia': 'SA', 'qatar': 'QA', 'kuwait': 'KW', 'bahrain': 'BH', 'oman': 'OM',
+  'united states': 'US', 'usa': 'US', 'united kingdom': 'GB', 'uk': 'GB',
+  'germany': 'DE', 'france': 'FR', 'india': 'IN', 'canada': 'CA', 'australia': 'AU',
+  'singapore': 'SG', 'netherlands': 'NL', 'switzerland': 'CH', 'japan': 'JP',
+  'egypt': 'EG', 'jordan': 'JO', 'lebanon': 'LB', 'pakistan': 'PK',
+}
+
+function toIsoCode(location: string): string {
+  const lower = location.toLowerCase().trim()
+  // Check direct mapping
+  if (LOCATION_TO_ISO[lower]) return LOCATION_TO_ISO[lower]
+  // Already an ISO code (2 uppercase letters)
+  if (/^[A-Z]{2}$/.test(location.trim())) return location.trim()
+  // Default to US
+  return 'US'
+}
+
 export async function searchPeople(
   query: string,
   location: string,
@@ -25,7 +45,7 @@ export async function searchPeople(
   const actorInput: Record<string, unknown> = {
     exaApiKey: process.env.EXA_API_KEY,
     query,
-    userLocation: location || 'US',
+    userLocation: toIsoCode(location),
     numResults: numResults || 10,
     includeText: false,
   }
@@ -68,21 +88,28 @@ export async function searchPeople(
 export function buildLinkedInUrls(
   companyNumericId: string,
   pastCompanyIds: string[],
-  schoolIds: string[]
+  pastCompanyNames: string[],
+  schoolNames: string[]
 ): LinkedInUrls {
   const baseUrl = 'https://www.linkedin.com/search/results/people/'
   const companyFilter = encodeURIComponent(JSON.stringify([companyNumericId]))
 
   let pastCompanyUrl: string | null = null
   if (pastCompanyIds.length > 0) {
+    // Use numeric IDs when available (exact match)
     const pastFilter = encodeURIComponent(JSON.stringify(pastCompanyIds))
     pastCompanyUrl = `${baseUrl}?currentCompany=${companyFilter}&pastCompany=${pastFilter}`
+  } else if (pastCompanyNames.length > 0) {
+    // Fallback: keyword search by company names
+    const keywords = pastCompanyNames.slice(0, 3).join(' OR ')
+    pastCompanyUrl = `${baseUrl}?currentCompany=${companyFilter}&keywords=${encodeURIComponent(keywords)}`
   }
 
   let schoolUrl: string | null = null
-  if (schoolIds.length > 0) {
-    const schoolFilter = encodeURIComponent(JSON.stringify(schoolIds))
-    schoolUrl = `${baseUrl}?currentCompany=${companyFilter}&schoolFilter=${schoolFilter}`
+  if (schoolNames.length > 0) {
+    // Schools use keyword search (no numeric IDs available)
+    const keywords = schoolNames.join(' OR ')
+    schoolUrl = `${baseUrl}?currentCompany=${companyFilter}&keywords=${encodeURIComponent(keywords)}`
   }
 
   return { pastCompanyUrl, schoolUrl }

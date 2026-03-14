@@ -1,7 +1,7 @@
 'use client'
 
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { ExternalLink, Users, Building2, MapPin, Briefcase } from 'lucide-react'
+import { ExternalLink, SquareArrowOutUpRight, Users, Building2, MapPin, Briefcase } from 'lucide-react'
 import { Job } from './job-table'
 
 interface CompanyTabProps {
@@ -55,10 +55,10 @@ export function CompanyTab({ job }: CompanyTabProps) {
                 href={job.organization_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
                 Company Website
+                <SquareArrowOutUpRight className="h-3 w-3" />
               </a>
             )}
             {linkedInProfileUrl && (
@@ -66,10 +66,10 @@ export function CompanyTab({ job }: CompanyTabProps) {
                 href={linkedInProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
                 LinkedIn Profile
+                <SquareArrowOutUpRight className="h-3 w-3" />
               </a>
             )}
             {!job.organization_url && !linkedInProfileUrl && (

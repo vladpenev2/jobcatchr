@@ -17,8 +17,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Briefcase,
+  Linkedin,
 } from 'lucide-react'
 import { formatDistanceToNow } from '@/lib/utils'
+import { getSourceDisplayName, getSourceFaviconUrl } from '@/lib/source-meta'
 import Image from 'next/image'
 import { useState } from 'react'
 
@@ -36,6 +38,7 @@ export interface Job {
   date_posted: string | null
   status: 'active' | 'likely_expired' | 'expired'
   source: 'linkedin' | 'career-site'
+  source_name: string | null
   source_domain: string | null
   employment_type: string[] | null
   seniority: string | null
@@ -80,9 +83,21 @@ const statusConfig = {
   expired: { label: 'Expired', color: 'bg-red-500' },
 }
 
-const sourceConfig = {
-  linkedin: { label: 'LinkedIn', variant: 'secondary' as const },
-  'career-site': { label: 'Career Site', variant: 'outline' as const },
+function SourceBadge({ job }: { job: Job }) {
+  const label = getSourceDisplayName(job.source_name, job.source)
+  const favicon = getSourceFaviconUrl(job.source_name, job.source)
+  const [imgErr, setImgErr] = useState(false)
+
+  return (
+    <Badge variant="outline" className="text-xs gap-1 px-2 max-w-[140px] truncate whitespace-nowrap">
+      {favicon && !imgErr ? (
+        <img src={favicon} alt="" className="h-3.5 w-3.5 rounded-sm shrink-0" onError={() => setImgErr(true)} />
+      ) : job.source === 'linkedin' ? (
+        <Linkedin className="h-3 w-3 shrink-0" />
+      ) : null}
+      {label}
+    </Badge>
+  )
 }
 
 function CompanyLogo({ src, name }: { src: string | null; name: string | null }) {
@@ -187,7 +202,6 @@ export function JobTable({
           <TableBody>
             {jobs.map((job) => {
               const statusDot = statusConfig[job.status]
-              const sourceBadge = sourceConfig[job.source]
               const location = formatLocation(job)
 
               return (
@@ -230,9 +244,7 @@ export function JobTable({
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={sourceBadge.variant} className="text-xs">
-                      {sourceBadge.label}
-                    </Badge>
+                    <SourceBadge job={job} />
                   </TableCell>
                   <TableCell className="text-center">
                     {job.seen && <CheckCheck className="h-4 w-4 mx-auto text-muted-foreground" />}

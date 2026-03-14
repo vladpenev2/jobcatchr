@@ -119,6 +119,7 @@ export async function executeSearch(
         id: job.id,
         source: job.source,
         source_actor: job.source_actor,
+        source_name: job.source_name,
         title: job.title,
         organization: job.organization,
         organization_url: job.organization_url,

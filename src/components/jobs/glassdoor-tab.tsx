@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { Star, ThumbsUp, ThumbsDown, Lightbulb } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Star, ThumbsUp, ThumbsDown, Lightbulb, Search } from 'lucide-react'
 import { GlassdoorReview } from '@/lib/apify/glassdoor'
+import { formatDate, formatDateTime } from '@/lib/utils'
 
 interface GlassdoorTabProps {
   jobId: string
   companyName: string | null
-  active: boolean
 }
 
 interface GlassdoorData {
@@ -39,10 +40,7 @@ function StarRating({ value, max = 5 }: { value: number; max?: number }) {
 
 function ReviewCard({ review }: { review: GlassdoorReview }) {
   const date = review.review_date_time
-    ? new Date(review.review_date_time).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-      })
+    ? formatDate(review.review_date_time)
     : null
 
   return (
@@ -108,16 +106,12 @@ function ReviewCard({ review }: { review: GlassdoorReview }) {
   )
 }
 
-export function GlassdoorTab({ jobId, companyName, active }: GlassdoorTabProps) {
+export function GlassdoorTab({ jobId, companyName }: GlassdoorTabProps) {
   const [data, setData] = useState<GlassdoorData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [fetched, setFetched] = useState(false)
 
-  useEffect(() => {
-    if (!active || fetched || !companyName) return
-
-    setFetched(true)
+  function fetchReviews() {
     setLoading(true)
     setError(null)
 
@@ -132,12 +126,25 @@ export function GlassdoorTab({ jobId, companyName, active }: GlassdoorTabProps) 
       .then((d) => setData(d))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [active, fetched, jobId, companyName])
+  }
 
   if (!companyName) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
         No company name to look up
+      </div>
+    )
+  }
+
+  if (!data && !loading && !error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+        <p className="text-sm">Look up Glassdoor reviews for {companyName}</p>
+        <p className="text-xs">This uses API credits</p>
+        <Button size="sm" onClick={fetchReviews}>
+          <Search className="h-3.5 w-3.5 mr-1.5" />
+          Fetch Reviews
+        </Button>
       </div>
     )
   }
@@ -157,6 +164,9 @@ export function GlassdoorTab({ jobId, companyName, active }: GlassdoorTabProps) 
       <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
         <p className="text-sm font-medium text-destructive">Failed to load reviews</p>
         <p className="text-xs">{error}</p>
+        <Button size="sm" variant="outline" onClick={fetchReviews} className="mt-2">
+          Retry
+        </Button>
       </div>
     )
   }
@@ -167,7 +177,7 @@ export function GlassdoorTab({ jobId, companyName, active }: GlassdoorTabProps) 
         <p className="text-sm">No reviews found for {companyName}</p>
         {data && (
           <p className="text-xs">
-            Last checked: {new Date(data.fetched_at).toLocaleDateString()}
+            Last checked: {formatDateTime(data.fetched_at)}
           </p>
         )}
       </div>
@@ -209,7 +219,7 @@ export function GlassdoorTab({ jobId, companyName, active }: GlassdoorTabProps) 
         {/* Attribution */}
         <p className="text-xs text-center text-muted-foreground pt-2">
           Reviews sourced from Glassdoor
-          {data.fetched_at && ` · ${new Date(data.fetched_at).toLocaleDateString()}`}
+          {data.fetched_at && ` · ${formatDateTime(data.fetched_at)}`}
         </p>
       </div>
     </ScrollArea>

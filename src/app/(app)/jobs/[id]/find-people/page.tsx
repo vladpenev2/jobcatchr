@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator'
 import { ChevronLeft, Building2 } from 'lucide-react'
 import { PeopleResults } from '@/components/people/people-results'
 import { LinkedInUrls } from '@/components/people/linkedin-urls'
+import { buildLinkedInUrls } from '@/lib/apify/people'
+import { resolveCompanyId, resolveCompanyByName } from '@/lib/apify/company'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -26,7 +28,7 @@ export default async function FindPeoplePage({ params }: PageProps) {
   // Get job details
   const { data: job } = await adminClient
     .from('jobs')
-    .select('id, title, organization, organization_logo, organization_linkedin_slug')
+    .select('id, title, organization, organization_logo, organization_linkedin_slug, organization_url')
     .eq('id', jobId)
     .single()
 
@@ -52,7 +54,7 @@ export default async function FindPeoplePage({ params }: PageProps) {
   // Check for cached search results
   const { data: cached } = await adminClient
     .from('people_searches')
-    .select('query, results, linkedin_urls')
+    .select('id, query, results, linkedin_urls')
     .eq('user_id', user.id)
     .eq('job_id', jobId)
     .order('created_at', { ascending: false })
@@ -72,10 +74,74 @@ export default async function FindPeoplePage({ params }: PageProps) {
     highlights: string[]
   }[]) : null
 
-  const linkedInUrls = cached?.linkedin_urls as {
+  // Extract labels for LinkedIn URLs from profile data
+  const targetCompanyName = job.organization?.toLowerCase() ?? ''
+  const pastCompanyNames = (profileData?.experiences ?? [])
+    .filter((e) => e.company && e.company.toLowerCase() !== targetCompanyName)
+    .map((e) => e.company)
+    .filter(Boolean)
+    .slice(0, 5)
+  const schoolNames = (profileData?.education ?? [])
+    .map((e) => e.school)
+    .filter(Boolean)
+    .slice(0, 3)
+
+  // Get or regenerate LinkedIn URLs
+  let linkedInUrls = cached?.linkedin_urls as {
     pastCompanyUrl: string | null
     schoolUrl: string | null
   } | null
+
+  // If cached URLs are missing pastCompanyUrl but we have profile data, regenerate
+  if (cached && hasProfileData && (!linkedInUrls?.pastCompanyUrl) && pastCompanyNames.length > 0) {
+    // Resolve target company (uses cache, no Apify credits)
+    let targetId: string | null = null
+    try {
+      let result = null
+      if (job.organization_linkedin_slug) {
+        result = await resolveCompanyId(
+          `https://www.linkedin.com/company/${job.organization_linkedin_slug}`
+        )
+      } else if (job.organization_url?.includes('linkedin.com/company')) {
+        result = await resolveCompanyId(job.organization_url)
+      } else if (job.organization) {
+        result = await resolveCompanyByName(job.organization)
+      }
+      targetId = result?.numericId ?? null
+    } catch { /* ignore */ }
+
+    if (targetId) {
+      // Resolve past companies in parallel (uses cache when available)
+      const pastExperiences = (profileData?.experiences ?? [])
+        .filter((e) => e.company && e.company.toLowerCase() !== targetCompanyName)
+        .slice(0, 5)
+
+      const pastCompanyIds: string[] = []
+      if (pastExperiences.length > 0) {
+        const results = await Promise.allSettled(
+          pastExperiences.map((exp) => {
+            if (exp.companyLinkedinUrl?.includes('linkedin.com')) {
+              return resolveCompanyId(exp.companyLinkedinUrl)
+            }
+            return resolveCompanyByName(exp.company)
+          })
+        )
+        for (const r of results) {
+          if (r.status === 'fulfilled' && r.value?.numericId) {
+            pastCompanyIds.push(r.value.numericId)
+          }
+        }
+      }
+
+      linkedInUrls = buildLinkedInUrls(targetId, pastCompanyIds, pastCompanyNames, schoolNames)
+
+      // Update the cached row so this doesn't run again
+      await adminClient
+        .from('people_searches')
+        .update({ linkedin_urls: linkedInUrls })
+        .eq('id', cached.id)
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -109,6 +175,7 @@ export default async function FindPeoplePage({ params }: PageProps) {
         jobId={jobId}
         initialQuery={initialQuery}
         initialResults={initialResults}
+        organizationLogo={job.organization_logo ?? null}
       />
 
       {/* LinkedIn shared connections URLs */}
@@ -118,6 +185,8 @@ export default async function FindPeoplePage({ params }: PageProps) {
           <LinkedInUrls
             pastCompanyUrl={linkedInUrls.pastCompanyUrl ?? null}
             schoolUrl={linkedInUrls.schoolUrl ?? null}
+            pastCompanyNames={pastCompanyNames}
+            schoolNames={schoolNames}
           />
         </>
       )}
