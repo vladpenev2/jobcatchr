@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server-admin'
 import { resolveCompanyId, resolveCompanyByName } from '@/lib/apify/company'
 import { searchPeople, buildLinkedInUrls } from '@/lib/apify/people'
+import { buildPeopleSearchQuery } from '@/lib/utils'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -21,14 +22,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   const adminClient = createAdminClient()
 
-  const { data: cached } = await adminClient
-    .from('people_searches')
-    .select('id, query, results, linkedin_urls, created_at')
-    .eq('user_id', user.id)
-    .eq('job_id', jobId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
+  const [{ data: cached }, { data: profile }] = await Promise.all([
+    adminClient
+      .from('people_searches')
+      .select('id, query, results, linkedin_urls, created_at')
+      .eq('user_id', user.id)
+      .eq('job_id', jobId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single(),
+    adminClient
+      .from('profiles')
+      .select('people_search_template')
+      .eq('id', user.id)
+      .single(),
+  ])
 
   if (cached) {
     return NextResponse.json({
@@ -37,10 +45,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       results: cached.results,
       linkedInUrls: cached.linkedin_urls,
       createdAt: cached.created_at,
+      peopleSearchTemplate: profile?.people_search_template ?? null,
     })
   }
 
-  return NextResponse.json({ cached: false, results: null })
+  return NextResponse.json({
+    cached: false,
+    results: null,
+    peopleSearchTemplate: profile?.people_search_template ?? null,
+  })
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -70,7 +83,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   // Get user profile for location and past experiences
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('location, profile_data')
+    .select('location, profile_data, people_search_template')
     .eq('id', user.id)
     .single()
 
@@ -89,8 +102,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // No body or invalid JSON - use auto-generated query
   }
 
-  // Auto-generate query
-  const autoQuery = `${job.title} or hiring manager or recruiter at ${job.organization} in ${userLocation}`
+  // Auto-generate query from user's template (or default)
+  const autoQuery = buildPeopleSearchQuery(
+    profile?.people_search_template ?? null,
+    job.title,
+    job.organization ?? '',
+    userLocation,
+  )
   const query = customQuery || autoQuery
   const highlightsQuery = job.title
 

@@ -88,9 +88,9 @@ describe('buildLinkedInUrls', () => {
     vi.resetModules()
   })
 
-  it('builds past company URL when pastCompanyIds provided', async () => {
+  it('builds past company URL with numeric IDs when available', async () => {
     const { buildLinkedInUrls } = await import('@/lib/apify/people')
-    const result = buildLinkedInUrls('11111', ['22222', '33333'], [])
+    const result = buildLinkedInUrls('11111', ['22222', '33333'], ['Acme', 'BigCo'], [])
 
     expect(result.pastCompanyUrl).not.toBeNull()
     expect(result.pastCompanyUrl).toContain('currentCompany')
@@ -98,19 +98,30 @@ describe('buildLinkedInUrls', () => {
     expect(result.schoolUrl).toBeNull()
   })
 
-  it('builds school URL when schoolIds provided', async () => {
+  it('falls back to keywords when no numeric IDs but has company names', async () => {
     const { buildLinkedInUrls } = await import('@/lib/apify/people')
-    const result = buildLinkedInUrls('11111', [], ['44444'])
+    const result = buildLinkedInUrls('11111', [], ['Acme Corp', 'BigCo'], [])
+
+    expect(result.pastCompanyUrl).not.toBeNull()
+    expect(result.pastCompanyUrl).toContain('currentCompany')
+    expect(result.pastCompanyUrl).toContain('keywords')
+    expect(result.pastCompanyUrl).toContain(encodeURIComponent('Acme Corp OR BigCo'))
+  })
+
+  it('builds school URL with keyword search', async () => {
+    const { buildLinkedInUrls } = await import('@/lib/apify/people')
+    const result = buildLinkedInUrls('11111', [], [], ['MIT', 'Stanford'])
 
     expect(result.pastCompanyUrl).toBeNull()
     expect(result.schoolUrl).not.toBeNull()
     expect(result.schoolUrl).toContain('currentCompany')
-    expect(result.schoolUrl).toContain('schoolFilter')
+    expect(result.schoolUrl).toContain('keywords')
+    expect(result.schoolUrl).toContain(encodeURIComponent('MIT OR Stanford'))
   })
 
   it('builds both URLs when both provided', async () => {
     const { buildLinkedInUrls } = await import('@/lib/apify/people')
-    const result = buildLinkedInUrls('11111', ['22222'], ['44444'])
+    const result = buildLinkedInUrls('11111', ['22222'], ['Acme'], ['MIT'])
 
     expect(result.pastCompanyUrl).not.toBeNull()
     expect(result.schoolUrl).not.toBeNull()
@@ -118,7 +129,7 @@ describe('buildLinkedInUrls', () => {
 
   it('returns null for both when no past companies or schools', async () => {
     const { buildLinkedInUrls } = await import('@/lib/apify/people')
-    const result = buildLinkedInUrls('11111', [], [])
+    const result = buildLinkedInUrls('11111', [], [], [])
 
     expect(result.pastCompanyUrl).toBeNull()
     expect(result.schoolUrl).toBeNull()
@@ -126,7 +137,7 @@ describe('buildLinkedInUrls', () => {
 
   it('encodes company ID correctly in current company filter', async () => {
     const { buildLinkedInUrls } = await import('@/lib/apify/people')
-    const result = buildLinkedInUrls('99999', ['12345'], [])
+    const result = buildLinkedInUrls('99999', ['12345'], ['Acme'], [])
 
     expect(result.pastCompanyUrl).toContain(encodeURIComponent(JSON.stringify(['99999'])))
     expect(result.pastCompanyUrl).toContain(encodeURIComponent(JSON.stringify(['12345'])))

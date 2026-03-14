@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { SearchForm } from '@/components/search/search-form'
-import { SearchHistory } from '@/components/search/search-history'
 import { JobsPage } from '@/components/jobs/jobs-page'
 
 export default function HomePage() {
@@ -23,11 +22,6 @@ export default function HomePage() {
         </div>
 
         <SearchForm onSearchComplete={handleSearchComplete} />
-
-        <div>
-          <h2 className="mb-3 text-lg font-semibold">Search History</h2>
-          <SearchHistory />
-        </div>
       </div>
 
       <JobsPage refreshKey={searchVersion} />

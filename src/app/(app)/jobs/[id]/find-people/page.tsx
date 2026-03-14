@@ -9,6 +9,7 @@ import { PeopleResults } from '@/components/people/people-results'
 import { LinkedInUrls } from '@/components/people/linkedin-urls'
 import { buildLinkedInUrls } from '@/lib/apify/people'
 import { resolveCompanyId, resolveCompanyByName } from '@/lib/apify/company'
+import { buildPeopleSearchQuery } from '@/lib/utils'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -37,7 +38,7 @@ export default async function FindPeoplePage({ params }: PageProps) {
   // Get user profile for auto-query generation
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('location, profile_data')
+    .select('location, profile_data, people_search_template')
     .eq('id', user.id)
     .single()
 
@@ -61,8 +62,13 @@ export default async function FindPeoplePage({ params }: PageProps) {
     .limit(1)
     .single()
 
-  // Auto-generate query
-  const autoQuery = `${job.title} or hiring manager or recruiter at ${job.organization ?? ''} in ${userLocation}`
+  // Auto-generate query from user's template (or default)
+  const autoQuery = buildPeopleSearchQuery(
+    profile?.people_search_template ?? null,
+    job.title,
+    job.organization ?? '',
+    userLocation,
+  )
 
   const initialQuery = (cached?.query as string) ?? autoQuery
   const initialResults = cached ? (cached.results as {

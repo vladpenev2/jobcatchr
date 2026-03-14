@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useTheme } from 'next-themes'
 import {
   Briefcase,
+  History,
   Settings,
   ShieldCheck,
   LogOut,
@@ -44,6 +45,7 @@ interface AppSidebarProps {
 
 const NAV_ITEMS = [
   { href: '/', label: 'Search / Jobs', icon: Briefcase },
+  { href: '/searches', label: 'Search History', icon: History },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 

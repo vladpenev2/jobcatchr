@@ -13,7 +13,7 @@ export default async function SettingsPage() {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('name, email, linkedin_url, location, profile_synced_at')
+    .select('name, email, linkedin_url, location, profile_synced_at, people_search_template')
     .eq('id', user.id)
     .single()
 

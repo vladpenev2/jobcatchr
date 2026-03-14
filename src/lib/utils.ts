@@ -25,6 +25,22 @@ export function formatDateTime(dateString: string): string {
   })
 }
 
+export const DEFAULT_PEOPLE_SEARCH_TEMPLATE = '{title} or hiring manager or talent acquisition at {company}'
+
+export function buildPeopleSearchQuery(
+  template: string | null,
+  title: string,
+  company: string,
+  location?: string
+): string {
+  const t = template || DEFAULT_PEOPLE_SEARCH_TEMPLATE
+  let query = t
+    .replace(/\{title\}/g, title)
+    .replace(/\{company\}/g, company)
+  if (location) query += ` in ${location}`
+  return query
+}
+
 export function formatDistanceToNow(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { updateProfile, changePassword } from './actions'
+import { updateProfile, changePassword, updatePeopleSearchTemplate } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTime, DEFAULT_PEOPLE_SEARCH_TEMPLATE } from '@/lib/utils'
 
 interface Profile {
   name: string
@@ -21,6 +21,7 @@ interface Profile {
   linkedin_url: string | null
   location: string | null
   profile_synced_at: string | null
+  people_search_template: string | null
 }
 
 interface SettingsFormProps {
@@ -30,6 +31,8 @@ interface SettingsFormProps {
 export function SettingsForm({ profile }: SettingsFormProps) {
   const [profileState, profileAction, isProfilePending] = useActionState(updateProfile, null)
   const [passwordState, passwordAction, isPasswordPending] = useActionState(changePassword, null)
+  const [templateState, templateAction, isTemplatePending] = useActionState(updatePeopleSearchTemplate, null)
+  const [templateValue, setTemplateValue] = useState(profile.people_search_template ?? DEFAULT_PEOPLE_SEARCH_TEMPLATE)
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
@@ -142,6 +145,48 @@ export function SettingsForm({ profile }: SettingsFormProps) {
               No LinkedIn URL set. Contact your admin.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* People Search Template */}
+      <Card>
+        <CardHeader>
+          <CardTitle>People Search Query</CardTitle>
+          <CardDescription>
+            Template used to auto-generate people search queries. Use {'{title}'} for job title and {'{company}'} for company name. Location is appended automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={templateAction} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="people_search_template">Query Template</Label>
+              <Input
+                id="people_search_template"
+                name="people_search_template"
+                type="text"
+                value={templateValue}
+                onChange={(e) => setTemplateValue(e.target.value)}
+              />
+            </div>
+            {templateState?.error && (
+              <p className="text-sm text-destructive">{templateState.error}</p>
+            )}
+            {templateState?.success && (
+              <p className="text-sm text-green-600">{templateState.success}</p>
+            )}
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isTemplatePending}>
+                {isTemplatePending ? 'Saving...' : 'Save Template'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setTemplateValue(DEFAULT_PEOPLE_SEARCH_TEMPLATE)}
+              >
+                Reset to Default
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 

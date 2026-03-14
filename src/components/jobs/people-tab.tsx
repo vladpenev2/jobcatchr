@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { buildPeopleSearchQuery } from '@/lib/utils'
 import type { Job } from './job-table'
 
 interface PeopleTabProps {
@@ -34,6 +35,7 @@ export function PeopleTab({ job }: PeopleTabProps) {
   const [cachedQuery, setCachedQuery] = useState<string | null>(null)
   const [cachedResults, setCachedResults] = useState<Person[] | null>(null)
   const [linkedInUrls, setLinkedInUrls] = useState<LinkedInUrlsData | null>(null)
+  const [searchTemplate, setSearchTemplate] = useState<string | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -45,6 +47,9 @@ export function PeopleTab({ job }: PeopleTabProps) {
       fetch(`/api/jobs/${job.id}/find-people`).then((r) => r.json()).catch(() => ({})),
       fetch('/api/profile/sync').then((r) => r.ok ? r.json() : null).catch(() => null),
     ]).then(([peopleData, syncData]) => {
+      if (peopleData?.peopleSearchTemplate !== undefined) {
+        setSearchTemplate(peopleData.peopleSearchTemplate)
+      }
       if (peopleData?.cached) {
         setCachedQuery(peopleData.query)
         setCachedResults(peopleData.results)
@@ -73,7 +78,7 @@ export function PeopleTab({ job }: PeopleTabProps) {
     }
   }
 
-  const autoQuery = `${job.title} or hiring manager or recruiter at ${job.organization ?? ''}`
+  const autoQuery = buildPeopleSearchQuery(searchTemplate, job.title, job.organization ?? '')
   const hasUrls = linkedInUrls && (linkedInUrls.pastCompanyUrl || linkedInUrls.schoolUrl)
 
   if (loading) {

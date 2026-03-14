@@ -34,6 +34,36 @@ export async function updateProfile(
   return { success: 'Profile updated' }
 }
 
+export async function updatePeopleSearchTemplate(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'Not authenticated' }
+
+  const template = (formData.get('people_search_template') as string)?.trim()
+
+  if (!template) return { error: 'Template cannot be empty' }
+  if (!template.includes('{title}') || !template.includes('{company}')) {
+    return { error: 'Template must include {title} and {company} placeholders' }
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ people_search_template: template })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/settings')
+  return { success: 'Search template updated' }
+}
+
 export async function changePassword(
   _prev: ActionResult | null,
   formData: FormData
