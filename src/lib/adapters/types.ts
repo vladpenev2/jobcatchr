@@ -25,6 +25,7 @@ export interface UnifiedJob {
   // LinkedIn-specific
   seniority?: string | null
   recruiter_name?: string | null
+  recruiter_title?: string | null
   recruiter_url?: string | null
   directapply?: boolean | null
   external_apply_url?: string | null

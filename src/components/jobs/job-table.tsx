@@ -42,6 +42,9 @@ export interface Job {
   source_domain: string | null
   employment_type: string[] | null
   seniority: string | null
+  recruiter_name: string | null
+  recruiter_title: string | null
+  recruiter_url: string | null
   directapply: boolean | null
   ai_experience_level: string | null
   ai_work_arrangement: string | null

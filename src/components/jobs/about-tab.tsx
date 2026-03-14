@@ -34,6 +34,36 @@ export function AboutTab({ job }: AboutTabProps) {
           </div>
         )}
 
+        {/* Recruiter / Hiring Manager */}
+        {job.recruiter_name && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Posted By
+            </h3>
+            <div className="flex items-center gap-3">
+              <div>
+                <p className="text-sm font-medium">
+                  {job.recruiter_url ? (
+                    <a
+                      href={job.recruiter_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      {job.recruiter_name}
+                    </a>
+                  ) : (
+                    job.recruiter_name
+                  )}
+                </p>
+                {job.recruiter_title && (
+                  <p className="text-xs text-muted-foreground">{job.recruiter_title}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Salary */}
         {(job.ai_salary_min || job.ai_salary_max) && (
           <div className="space-y-2">

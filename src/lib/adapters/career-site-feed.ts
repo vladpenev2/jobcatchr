@@ -18,7 +18,7 @@ export class CareerSiteFeedAdapter extends BaseAdapter {
     const client = new ApifyClient({ token: process.env.APIFY_API_TOKEN })
 
     const input: Record<string, unknown> = {
-      limit: 1000,
+      limit: 250,
       includeAi: true,
       includeLinkedIn: true,
       descriptionType: 'text',

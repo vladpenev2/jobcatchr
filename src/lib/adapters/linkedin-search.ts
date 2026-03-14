@@ -26,7 +26,7 @@ export class LinkedInSearchAdapter extends BaseAdapter {
 
     const input: Record<string, unknown> = {
       timeRange: timeRangeMap[criteria.timeRange] ?? '7d',
-      limit: 1000,
+      limit: 250,
       includeAi: true,
       descriptionType: 'text',
     }
@@ -84,6 +84,7 @@ export class LinkedInSearchAdapter extends BaseAdapter {
       // LinkedIn-specific
       seniority: (item.seniority as string) ?? null,
       recruiter_name: (item.recruiter_name as string) ?? null,
+      recruiter_title: (item.recruiter_title as string) ?? null,
       recruiter_url: (item.recruiter_url as string) ?? null,
       directapply: (item.directapply as boolean) ?? null,
       external_apply_url: (item.external_apply_url as string) ?? null,

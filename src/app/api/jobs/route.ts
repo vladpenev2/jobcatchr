@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       id, title, organization, organization_logo, organization_url, organization_linkedin_slug,
       url, locations_derived, cities_derived, countries_derived, remote_derived,
       employment_type, date_posted, date_validthrough, status, source, source_name, source_domain,
-      seniority, directapply, external_apply_url,
+      seniority, recruiter_name, recruiter_title, recruiter_url, directapply, external_apply_url,
       ai_experience_level, ai_work_arrangement, ai_key_skills, ai_employment_type,
       ai_core_responsibilities, ai_requirements_summary, ai_salary_min, ai_salary_max,
       ai_salary_currency, ai_salary_unit,
